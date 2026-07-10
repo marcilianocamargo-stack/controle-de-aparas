@@ -165,6 +165,7 @@ select:focus, input:focus {
 .entry-tipo.compra_bobina { color: #1a56a0; }
 .entry-tipo.venda_chapa { color: #1e8449; }
 .entry-tipo.venda_apara { color: #b8860b; }
+.entry-tipo.venda_papel_ondulado { color: #7d3c98; }
 .entry-info { font-size: 12.5px; color: #667; margin-top: 3px; }
 .entry-peso { font-weight: 800; font-size: 15px; white-space: nowrap; }
 .entry-del { background: none; border: none; color: #c0392b; font-size: 18px; cursor: pointer; padding: 4px 8px; }
@@ -268,7 +269,7 @@ textarea {
       <div class="card-title">📎 Importar notas em PDF</div>
       <input type="file" id="pdfInput" accept="application/pdf" multiple class="hidden">
       <button class="btn btn-primary" id="btnAnexarPdf">Anexar PDFs das notas (pode escolher várias)</button>
-      <p class="hint">Selecione de uma vez todas as notas do dia — ex: as 21 de sexta-feira. Ou direto do WhatsApp: selecione várias notas lá e toque em <b>Compartilhar</b> escolhendo este app. Ele lê peso, valor, tipo, fornecedor/cliente, data e número de cada uma e monta uma fila pra você conferir e dar OK.</p>
+      <p class="hint">Selecione de uma vez todas as notas do dia — ex: as 21 de sexta-feira. Ou direto do WhatsApp: selecione várias notas lá e toque em <b>Compartilhar</b> escolhendo este app. Ele lê peso, tipo, fornecedor/cliente, data e número de cada uma (o nome do arquivo, tipo "NF 1404 ABAPEL", já dá o número e o cliente) e monta uma fila pra você conferir e dar OK.</p>
       <div id="pdfStatus" class="hint"></div>
     </div>
 
@@ -288,18 +289,11 @@ textarea {
         <option value="compra_bobina">Compra de bobina (entrada)</option>
         <option value="venda_chapa">Venda de chapa / produção (saída)</option>
         <option value="venda_apara">Venda de aparas (saída)</option>
+        <option value="venda_papel_ondulado">Papel Ondulado (saída)</option>
       </select>
 
-      <div class="grid2">
-        <div>
-          <label class="lbl">Peso (kg)</label>
-          <input type="number" id="fPeso" inputmode="decimal" placeholder="0">
-        </div>
-        <div>
-          <label class="lbl">Valor R$ (opcional)</label>
-          <input type="number" id="fValor" inputmode="decimal" placeholder="0">
-        </div>
-      </div>
+      <label class="lbl">Peso (kg)</label>
+      <input type="number" id="fPeso" inputmode="decimal" placeholder="0">
 
       <label class="lbl">Fornecedor / Cliente</label>
       <input type="text" id="fParceiro" placeholder="Nome">
@@ -344,6 +338,7 @@ textarea {
       <div class="balanco-row total"><span>Estoque inicial + entrada</span><span class="v" id="vSubtotal">0</span></div>
       <div class="balanco-row sub"><span>− Saiu em chapa (produção)</span><span class="v" id="vSaidaChapa">0</span></div>
       <div class="balanco-row sub"><span>− Saiu de aparas</span><span class="v" id="vSaidaApara">0</span></div>
+      <div class="balanco-row sub"><span>− Saiu em papel ondulado</span><span class="v" id="vSaidaPapelOndulado">0</span></div>
       <div class="balanco-row total"><span>Estoque teórico final</span><span class="v" id="vTeorico">0</span></div>
 
       <label class="lbl">Estoque final informado (kg) <span class="hint" style="display:inline">— contagem física no fechamento</span></label>
@@ -448,7 +443,18 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-const TIPO_LABEL = { compra_bobina: 'Compra de bobina', venda_chapa: 'Venda de chapa', venda_apara: 'Venda de aparas' };
+const TIPO_LABEL = { compra_bobina: 'Compra de bobina', venda_chapa: 'Venda de chapa', venda_apara: 'Venda de aparas', venda_papel_ondulado: 'Papel Ondulado' };
+
+/* Nomes de arquivo seguem o padrão "NF <número> <FORNECEDOR/CLIENTE>.pdf" nas
+   notas da Prime — mais confiável que tentar ler o texto do PDF, e serve como
+   referência pra busca futura. */
+function extrairDoNomeArquivo(nomeArquivo) {
+  const semExt = String(nomeArquivo || '').replace(/\.pdf$/i, '').trim();
+  const m = semExt.match(/^NF\s*0*(\d+)\s+(.+)$/i);
+  if (!m) return { nota: null, parceiro: null };
+  const parceiro = m[2].split(' - ')[0].trim();
+  return { nota: m[1], parceiro: parceiro || null };
+}
 
 /* ===================== TABS ===================== */
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -500,7 +506,6 @@ function limparForm() {
   document.getElementById('fData').value = hojeISO();
   document.getElementById('fTipo').value = 'compra_bobina';
   document.getElementById('fPeso').value = '';
-  document.getElementById('fValor').value = '';
   document.getElementById('fParceiro').value = '';
   document.getElementById('fNota').value = '';
   document.getElementById('fDevolucao').checked = false;
@@ -519,7 +524,6 @@ document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
     data,
     tipo: document.getElementById('fTipo').value,
     peso,
-    valor: parseFloat(document.getElementById('fValor').value) || null,
     parceiro: document.getElementById('fParceiro').value.trim(),
     nota: document.getElementById('fNota').value.trim(),
     devolucao: document.getElementById('fDevolucao').checked,
@@ -663,16 +667,18 @@ async function processarPDFsEmLote(files) {
       const texto = await extrairTextoPDF(file);
       dados = heuristicaExtrair(texto);
     } catch (err) { /* nota pode ser imagem escaneada; entra na fila sem dados pra revisão manual */ }
+    // O nome do arquivo ("NF 1404 ABAPEL.pdf") é mais confiável que o texto
+    // do PDF pra pegar número da nota e fornecedor/cliente.
+    const doNome = extrairDoNomeArquivo(file.name);
     fila.push({
       id: novoId(),
       arquivo: file.name,
       data: dados.data || hojeISO(),
       peso: dados.peso != null ? Math.round(dados.peso * 100) / 100 : null,
       pesoOrigem: dados.pesoOrigem || null,
-      valor: dados.valor != null ? dados.valor : null,
       tipo: dados.tipo || null,
-      parceiro: dados.parceiro || '',
-      nota: dados.nota || '',
+      parceiro: doNome.parceiro || dados.parceiro || '',
+      nota: doNome.nota || dados.nota || '',
       devolucao: !!dados.devolucao
     });
     lidas++;
@@ -703,14 +709,13 @@ function renderFila() {
             <option value="compra_bobina" ${it.tipo === 'compra_bobina' ? 'selected' : ''}>Compra de bobina</option>
             <option value="venda_chapa" ${it.tipo === 'venda_chapa' ? 'selected' : ''}>Venda de chapa</option>
             <option value="venda_apara" ${it.tipo === 'venda_apara' ? 'selected' : ''}>Venda de aparas</option>
+            <option value="venda_papel_ondulado" ${it.tipo === 'venda_papel_ondulado' ? 'selected' : ''}>Papel Ondulado</option>
           </select>
         </div>
       </div>
 
-      <div class="grid2">
-        <div><label class="lbl">Peso (kg)</label><input type="number" class="fila-peso" inputmode="decimal" value="${it.peso != null ? it.peso : ''}" placeholder="0"></div>
-        <div><label class="lbl">Valor R$</label><input type="number" class="fila-valor" inputmode="decimal" value="${it.valor != null ? it.valor : ''}" placeholder="0"></div>
-      </div>
+      <label class="lbl">Peso (kg)</label>
+      <input type="number" class="fila-peso" inputmode="decimal" value="${it.peso != null ? it.peso : ''}" placeholder="0">
 
       <label class="lbl">Fornecedor / Cliente</label>
       <input type="text" class="fila-parceiro" value="${(it.parceiro || '').replace(/"/g, '&quot;')}" placeholder="Nome">
@@ -744,6 +749,7 @@ function renderFila() {
 function confirmarItemFila(id) {
   const el = document.querySelector('.fila-item[data-id="' + id + '"]');
   if (!el) return;
+  const itemFila = getFila().find(x => x.id === id);
   const data = el.querySelector('.fila-data').value;
   const peso = parseFloat(el.querySelector('.fila-peso').value);
   const tipo = el.querySelector('.fila-tipo').value;
@@ -756,9 +762,9 @@ function confirmarItemFila(id) {
     data,
     tipo,
     peso,
-    valor: parseFloat(el.querySelector('.fila-valor').value) || null,
     parceiro: el.querySelector('.fila-parceiro').value.trim(),
     nota: el.querySelector('.fila-nota').value.trim(),
+    arquivo: itemFila ? itemFila.arquivo : null,
     devolucao: el.querySelector('.fila-devolucao').checked,
     origem: 'pdf',
     criadoEm: new Date().toISOString()
@@ -826,6 +832,7 @@ function calcularBalanco(mes) {
   const entrada = lanc.filter(x => x.tipo === 'compra_bobina').reduce((s, x) => s + pesoComSinal(x), 0);
   const saidaChapa = lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + pesoComSinal(x), 0);
   const saidaApara = lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + pesoComSinal(x), 0);
+  const saidaPapelOndulado = lanc.filter(x => x.tipo === 'venda_papel_ondulado').reduce((s, x) => s + pesoComSinal(x), 0);
 
   const fech = getFechamento(mes) || {};
   const fechAnterior = getFechamento(mesAnterior(mes));
@@ -834,13 +841,13 @@ function calcularBalanco(mes) {
   const estoqueInicial = fech.estoqueInicial != null ? fech.estoqueInicial : (estoqueInicialAuto ? fechAnterior.estoqueFinal : 0);
 
   const subtotal = estoqueInicial + entrada;
-  const teorico = subtotal - saidaChapa - saidaApara;
+  const teorico = subtotal - saidaChapa - saidaApara - saidaPapelOndulado;
   const estoqueFinal = fech.estoqueFinal != null ? fech.estoqueFinal : null;
 
   const perda = estoqueFinal != null ? teorico - estoqueFinal : null;
   const percPerda = perda != null && subtotal > 0 ? (perda / subtotal) * 100 : null;
 
-  return { entrada, saidaChapa, saidaApara, estoqueInicial, estoqueInicialAuto, subtotal, teorico, estoqueFinal, perda, percPerda, meta: fech.meta != null ? fech.meta : 8 };
+  return { entrada, saidaChapa, saidaApara, saidaPapelOndulado, estoqueInicial, estoqueInicialAuto, subtotal, teorico, estoqueFinal, perda, percPerda, meta: fech.meta != null ? fech.meta : 8 };
 }
 
 function atualizarFechamento() {
@@ -855,6 +862,7 @@ function atualizarFechamento() {
   document.getElementById('vSubtotal').textContent = fmt(b.subtotal) + ' kg';
   document.getElementById('vSaidaChapa').textContent = fmt(b.saidaChapa) + ' kg';
   document.getElementById('vSaidaApara').textContent = fmt(b.saidaApara) + ' kg';
+  document.getElementById('vSaidaPapelOndulado').textContent = fmt(b.saidaPapelOndulado) + ' kg';
   document.getElementById('vTeorico').textContent = fmt(b.teorico) + ' kg';
   document.getElementById('estoqueFinal').value = b.estoqueFinal != null ? b.estoqueFinal : '';
   document.getElementById('metaPerda').value = b.meta;
@@ -903,8 +911,8 @@ document.getElementById('btnExportarXlsx').addEventListener('click', () => {
 
   const wb = XLSX.utils.book_new();
 
-  const detalhe = [['Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Valor (R$)', 'Fornecedor/Cliente', 'Nº Nota', 'Origem']];
-  lanc.forEach(x => detalhe.push([fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.valor || '', x.parceiro || '', x.nota || '', x.origem]));
+  const detalhe = [['Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Fornecedor/Cliente', 'Nº Nota', 'Arquivo', 'Origem']];
+  lanc.forEach(x => detalhe.push([fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.parceiro || '', x.nota || '', x.arquivo || '', x.origem]));
   const wsDet = XLSX.utils.aoa_to_sheet(detalhe);
   XLSX.utils.book_append_sheet(wb, wsDet, 'Lançamentos');
 
@@ -916,6 +924,7 @@ document.getElementById('btnExportarXlsx').addEventListener('click', () => {
     ['Estoque inicial + entrada', b.subtotal],
     ['- Saiu em chapa (produção)', b.saidaChapa],
     ['- Saiu de aparas', b.saidaApara],
+    ['- Saiu em papel ondulado', b.saidaPapelOndulado],
     ['Estoque teórico final', b.teorico],
     ['Estoque final informado', b.estoqueFinal],
     ['Perda (kg)', b.perda],
@@ -954,6 +963,7 @@ document.getElementById('btnCopiarResumo').addEventListener('click', () => {
     'Menos (saiu de aparas no mês)',
     fmt(b.saidaApara) + ' 👍',
     '',
+    ...(b.saidaPapelOndulado ? ['Menos (saiu em papel ondulado no mês)', fmt(b.saidaPapelOndulado) + ' 👍', ''] : []),
     dataFim + ' sobrou em Estoque',
     (b.estoqueFinal != null ? fmt(b.estoqueFinal) : '?') + ' 👍',
     '',
