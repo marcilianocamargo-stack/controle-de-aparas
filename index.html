@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a56a0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Perda Papel">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Controle de Aparas · Perda de Papel</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #d6e4f4;
+  min-height: 100vh;
+  padding: 14px 12px 60px;
+  font-size: 17px;
+}
+
+.wrap { max-width: 640px; margin: 0 auto; }
+
+.header {
+  background: #1a56a0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.logo-box {
+  background: white;
+  border-radius: 10px;
+  padding: 7px 11px;
+  font-weight: 900;
+  font-size: 17px;
+  color: #1a56a0;
+  flex-shrink: 0;
+  letter-spacing: .5px;
+  text-align: center;
+  line-height: 1.2;
+}
+.header-txt h1 { color: white; font-size: 19px; font-weight: 700; line-height: 1.2; }
+.header-txt p  { color: #a8c8f0; font-size: 13px; margin-top: 2px; }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  background: white;
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+.tab-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 11px 4px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #6a86ad;
+  cursor: pointer;
+}
+.tab-btn.active { background: #1a56a0; color: white; }
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.10);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  color: #1a56a0;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.lbl {
+  display: block;
+  font-size: 14px;
+  color: #444;
+  font-weight: 700;
+  margin-bottom: 6px;
+  margin-top: 13px;
+}
+.lbl:first-of-type { margin-top: 0; }
+
+select, input[type=number], input[type=text], input[type=date] {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2.5px solid #b8cfe8;
+  font-size: 17px;
+  color: #111;
+  background: #f4f8ff;
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+  -webkit-appearance: none;
+}
+select {
+  height: 52px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'%3E%3Cpath fill='%23555' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 42px;
+}
+select:focus, input:focus {
+  border-color: #1a56a0;
+  box-shadow: 0 0 0 3px rgba(26,86,160,.15);
+  background: #fff;
+}
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.btn {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 14px;
+  text-align: center;
+}
+.btn-primary { background: #1a56a0; color: white; }
+.btn-primary:active { background: #133f78; }
+.btn-outline { background: white; color: #1a56a0; border: 2.5px solid #1a56a0; }
+.btn-ghost { background: #eef4fc; color: #1a56a0; }
+.btn-danger { background: #fdeaea; color: #c0392b; }
+.btn-sm { padding: 9px; font-size: 13px; margin-top: 8px; }
+
+.hint { font-size: 12.5px; color: #789; margin-top: 4px; line-height: 1.4; }
+.badge { display: inline-block; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
+.badge-auto { background: #fff3cd; color: #8a6300; }
+.badge-ok { background: #e2f6e8; color: #1e8449; }
+.badge-warn { background: #fde3e3; color: #c0392b; }
+
+.entry {
+  border: 1.5px solid #e4edf7;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.entry-tipo { font-weight: 800; font-size: 13.5px; }
+.entry-tipo.compra_bobina { color: #1a56a0; }
+.entry-tipo.venda_chapa { color: #1e8449; }
+.entry-tipo.venda_apara { color: #b8860b; }
+.entry-info { font-size: 12.5px; color: #667; margin-top: 3px; }
+.entry-peso { font-weight: 800; font-size: 15px; white-space: nowrap; }
+.entry-del { background: none; border: none; color: #c0392b; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+
+.balanco-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 15px;
+}
+.balanco-row:last-child { border-bottom: none; }
+.balanco-row .v { font-weight: 800; }
+.balanco-row.total { background: #f4f8ff; margin: 6px -18px; padding: 12px 18px; border-radius: 10px; border-bottom: none; }
+.balanco-row.sub { color: #667; font-size: 13.5px; }
+
+.perda-box {
+  margin-top: 16px;
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+}
+.perda-box.ok { background: #e2f6e8; }
+.perda-box.warn { background: #fde3e3; }
+.perda-box.neutral { background: #f4f8ff; }
+.perda-pct { font-size: 34px; font-weight: 900; }
+.perda-box.ok .perda-pct { color: #1e8449; }
+.perda-box.warn .perda-pct { color: #c0392b; }
+.perda-box.neutral .perda-pct { color: #1a56a0; }
+.perda-sub { font-size: 13px; color: #556; margin-top: 4px; }
+
+.empty { color: #99a; font-size: 13.5px; text-align: center; padding: 14px 0; }
+
+.hist-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2f7;
+}
+.hist-row:last-child { border-bottom: none; }
+.hist-mes { font-weight: 700; font-size: 14.5px; }
+.hist-pct { font-weight: 900; font-size: 17px; }
+
+textarea {
+  width: 100%;
+  min-height: 160px;
+  border-radius: 12px;
+  border: 2.5px solid #b8cfe8;
+  padding: 12px;
+  font-size: 13.5px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f4f8ff;
+  color: #222;
+}
+
+.toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a56a0;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s;
+  z-index: 50;
+}
+.toast.show { opacity: 1; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo-box">PRIME</div>
+    <div class="header-txt">
+      <h1>Controle de Aparas</h1>
+      <p>Perda de papel · fechamento mensal</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="lancar">Lançar</button>
+    <button class="tab-btn" data-tab="fechamento">Fechamento</button>
+    <button class="tab-btn" data-tab="historico">Histórico</button>
+  </div>
+
+  <!-- ===================== TAB LANÇAR ===================== -->
+  <div id="tab-lancar" class="tab-content">
+
+    <div class="card">
+      <div class="card-title">📎 Importar nota em PDF</div>
+      <input type="file" id="pdfInput" accept="application/pdf" class="hidden">
+      <button class="btn btn-primary" id="btnAnexarPdf">Anexar PDF da nota</button>
+      <p class="hint">Ou, direto do WhatsApp: abra o PDF recebido, toque em <b>Compartilhar</b> e escolha este app. Ele tenta ler peso, valor e tipo sozinho — você confere antes de salvar.</p>
+      <div id="pdfStatus" class="hint"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✍️ Lançamento <span id="origemBadge"></span></div>
+
+      <label class="lbl">Data</label>
+      <input type="date" id="fData">
+
+      <label class="lbl">Tipo</label>
+      <select id="fTipo">
+        <option value="compra_bobina">Compra de bobina (entrada)</option>
+        <option value="venda_chapa">Venda de chapa / produção (saída)</option>
+        <option value="venda_apara">Venda de aparas (saída)</option>
+      </select>
+
+      <div class="grid2">
+        <div>
+          <label class="lbl">Peso (kg)</label>
+          <input type="number" id="fPeso" inputmode="decimal" placeholder="0">
+        </div>
+        <div>
+          <label class="lbl">Valor R$ (opcional)</label>
+          <input type="number" id="fValor" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+
+      <label class="lbl">Fornecedor / Cliente</label>
+      <input type="text" id="fParceiro" placeholder="Nome">
+
+      <label class="lbl">Nº da nota (opcional)</label>
+      <input type="text" id="fNota" placeholder="Nº NF-e">
+
+      <button class="btn btn-primary" id="btnSalvarLancamento">Salvar lançamento</button>
+      <button class="btn btn-ghost hidden" id="btnCancelarEdicao">Cancelar</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Lançamentos de <span id="mesLancarLabel"></span></div>
+      <div id="listaLancamentos"></div>
+    </div>
+
+  </div>
+
+  <!-- ===================== TAB FECHAMENTO ===================== -->
+  <div id="tab-fechamento" class="tab-content hidden">
+
+    <div class="card">
+      <div class="card-title">📅 Mês do fechamento</div>
+      <select id="mesFechamento"></select>
+
+      <label class="lbl">Meta de perda (%)</label>
+      <input type="number" id="metaPerda" value="8" step="0.1">
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚖️ Balanço do mês</div>
+
+      <label class="lbl">Estoque inicial (kg) <span id="estoqueInicialBadge" class="badge badge-auto">estimado</span></label>
+      <input type="number" id="estoqueInicial" inputmode="decimal" placeholder="0">
+
+      <div class="balanco-row sub"><span>+ Entrou (compra de bobina)</span><span class="v" id="vEntrada">0</span></div>
+      <div class="balanco-row total"><span>Estoque inicial + entrada</span><span class="v" id="vSubtotal">0</span></div>
+      <div class="balanco-row sub"><span>− Saiu em chapa (produção)</span><span class="v" id="vSaidaChapa">0</span></div>
+      <div class="balanco-row sub"><span>− Saiu de aparas</span><span class="v" id="vSaidaApara">0</span></div>
+      <div class="balanco-row total"><span>Estoque teórico final</span><span class="v" id="vTeorico">0</span></div>
+
+      <label class="lbl">Estoque final informado (kg) <span class="hint" style="display:inline">— contagem física no fechamento</span></label>
+      <input type="number" id="estoqueFinal" inputmode="decimal" placeholder="0">
+
+      <div id="perdaBox" class="perda-box neutral">
+        <div class="perda-pct" id="perdaPct">--%</div>
+        <div class="perda-sub" id="perdaSub">Informe o estoque final para calcular</div>
+      </div>
+
+      <button class="btn btn-primary" id="btnSalvarFechamento">Salvar fechamento do mês</button>
+      <button class="btn btn-outline" id="btnExportarXlsx">Exportar Excel (.xlsx)</button>
+      <button class="btn btn-ghost" id="btnCopiarResumo">Copiar resumo p/ WhatsApp</button>
+      <textarea id="resumoTexto" class="hidden" readonly></textarea>
+    </div>
+
+  </div>
+
+  <!-- ===================== TAB HISTÓRICO ===================== -->
+  <div id="tab-historico" class="tab-content hidden">
+    <div class="card">
+      <div class="card-title">📈 Histórico de fechamentos</div>
+      <div id="listaHistorico"></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+/* ===================== STORAGE ===================== */
+const LS_LANC = 'aparas_lancamentos_v1';
+const LS_FECH = 'aparas_fechamentos_v1';
+
+function lerLS(key) { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; } }
+function gravarLS(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
+
+function chaveMes(dataStr) { return dataStr.slice(0, 7); } // 'YYYY-MM'
+
+function getLancamentos(mes) {
+  const all = lerLS(LS_LANC);
+  return all[mes] || [];
+}
+function salvarLancamentos(mes, arr) {
+  const all = lerLS(LS_LANC);
+  all[mes] = arr;
+  gravarLS(LS_LANC, all);
+}
+function getFechamento(mes) {
+  const all = lerLS(LS_FECH);
+  return all[mes] || null;
+}
+function salvarFechamento(mes, dados) {
+  const all = lerLS(LS_FECH);
+  all[mes] = Object.assign({}, all[mes], dados);
+  gravarLS(LS_FECH, all);
+}
+function mesAnterior(mes) {
+  const [a, m] = mes.split('-').map(Number);
+  const d = new Date(a, m - 2, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+/* ===================== HELPERS ===================== */
+const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function nomeMes(mes) { const [a, m] = mes.split('-').map(Number); return MESES_NOME[m - 1] + '/' + a; }
+function hojeISO() { return new Date().toISOString().slice(0, 10); }
+function mesAtual() { return hojeISO().slice(0, 7); }
+function fmt(n) { if (n == null || isNaN(n)) return '0'; return Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 0 }); }
+function fmtDataBR(iso) { const [a,m,d]=iso.split('-'); return d+'/'+m; }
+
+function parseNumeroBR(str) {
+  if (!str) return null;
+  str = String(str).replace(/[^\d.,\-]/g, '');
+  if (!str) return null;
+  if (str.includes(',')) {
+    str = str.replace(/\./g, '').replace(',', '.');
+  } else {
+    const parts = str.split('.');
+    if (parts.length > 1 && parts[parts.length - 1].length === 3) str = parts.join('');
+  }
+  const n = parseFloat(str);
+  return isNaN(n) ? null : n;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+const TIPO_LABEL = { compra_bobina: 'Compra de bobina', venda_chapa: 'Venda de chapa', venda_apara: 'Venda de aparas' };
+
+/* ===================== TABS ===================== */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+    if (btn.dataset.tab === 'fechamento') atualizarFechamento();
+    if (btn.dataset.tab === 'historico') renderHistorico();
+  });
+});
+
+/* ===================== LANÇAR ===================== */
+let mesLancarAtivo = mesAtual();
+let editandoId = null;
+
+document.getElementById('fData').value = hojeISO();
+
+function renderLista() {
+  document.getElementById('mesLancarLabel').textContent = nomeMes(mesLancarAtivo);
+  const lista = document.getElementById('listaLancamentos');
+  const itens = getLancamentos(mesLancarAtivo).slice().sort((a, b) => b.data.localeCompare(a.data));
+  if (itens.length === 0) {
+    lista.innerHTML = '<div class="empty">Nenhum lançamento neste mês ainda.</div>';
+    return;
+  }
+  lista.innerHTML = itens.map(it => `
+    <div class="entry">
+      <div>
+        <div class="entry-tipo ${it.tipo}">${TIPO_LABEL[it.tipo]}</div>
+        <div class="entry-info">${fmtDataBR(it.data)} · ${it.parceiro || 'sem nome'} ${it.nota ? '· NF ' + it.nota : ''} ${it.origem === 'pdf' ? '· 📎' : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="entry-peso">${fmt(it.peso)} kg</div>
+        <button class="entry-del" data-id="${it.id}" title="Excluir">✕</button>
+      </div>
+    </div>
+  `).join('');
+  lista.querySelectorAll('.entry-del').forEach(b => b.addEventListener('click', () => {
+    if (!confirm('Excluir este lançamento?')) return;
+    const arr = getLancamentos(mesLancarAtivo).filter(x => x.id !== b.dataset.id);
+    salvarLancamentos(mesLancarAtivo, arr);
+    renderLista();
+  }));
+}
+
+function limparForm() {
+  document.getElementById('fData').value = hojeISO();
+  document.getElementById('fTipo').value = 'compra_bobina';
+  document.getElementById('fPeso').value = '';
+  document.getElementById('fValor').value = '';
+  document.getElementById('fParceiro').value = '';
+  document.getElementById('fNota').value = '';
+  document.getElementById('origemBadge').innerHTML = '';
+  editandoId = null;
+  document.getElementById('btnCancelarEdicao').classList.add('hidden');
+}
+
+document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
+  const data = document.getElementById('fData').value;
+  const peso = parseFloat(document.getElementById('fPeso').value);
+  if (!data) { toast('Informe a data'); return; }
+  if (!peso || peso <= 0) { toast('Informe o peso'); return; }
+
+  const entry = {
+    id: editandoId || (Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+    data,
+    tipo: document.getElementById('fTipo').value,
+    peso,
+    valor: parseFloat(document.getElementById('fValor').value) || null,
+    parceiro: document.getElementById('fParceiro').value.trim(),
+    nota: document.getElementById('fNota').value.trim(),
+    origem: window.__origemAtual || 'manual',
+    criadoEm: new Date().toISOString()
+  };
+
+  const mes = chaveMes(data);
+  let arr = getLancamentos(mes);
+  if (editandoId) arr = arr.filter(x => x.id !== editandoId);
+  arr.push(entry);
+  salvarLancamentos(mes, arr);
+
+  mesLancarAtivo = mes;
+  window.__origemAtual = 'manual';
+  limparForm();
+  renderLista();
+  toast('Lançamento salvo');
+});
+
+document.getElementById('btnCancelarEdicao').addEventListener('click', limparForm);
+
+/* ===================== IMPORTAÇÃO DE PDF ===================== */
+document.getElementById('btnAnexarPdf').addEventListener('click', () => document.getElementById('pdfInput').click());
+document.getElementById('pdfInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) processarPDF(file);
+  e.target.value = '';
+});
+
+async function extrairTextoPDF(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let texto = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    texto += content.items.map(it => it.str).join(' ') + '\n';
+  }
+  return texto;
+}
+
+function heuristicaExtrair(texto) {
+  const up = texto.toUpperCase();
+
+  let peso = null;
+  let m = up.match(/PESO\s*L[IÍ]QUIDO[:\s]*([\d.,]+)/) || up.match(/PESO\s*BRUTO[:\s]*([\d.,]+)/) || up.match(/([\d.,]+)\s*KG/);
+  if (m) peso = parseNumeroBR(m[1]);
+
+  let valor = null;
+  let mv = up.match(/VALOR\s*TOTAL(?:\s*DA\s*NOTA)?[:\s]*R?\$?\s*([\d.,]+)/);
+  if (mv) valor = parseNumeroBR(mv[1]);
+
+  let tipo = null;
+  if (up.includes('APARA')) tipo = 'venda_apara';
+  else if (up.includes('BOBINA') && (up.includes('COMPRA') || up.includes('ENTRADA'))) tipo = 'compra_bobina';
+  else if (up.includes('CHAPA') || up.includes('VENDA')) tipo = 'venda_chapa';
+
+  let parceiro = null;
+  let mp = up.match(/(?:DESTINAT[ÁA]RIO\s*\/?\s*REMETENTE|RAZ[ÃA]O\s*SOCIAL)[:\s]*([A-Z0-9À-Ú .\-]{5,60})/);
+  if (mp) parceiro = mp[1].trim().replace(/\s{2,}/g, ' ');
+
+  let nota = null;
+  let mn = up.match(/N[ºO°]\.?\s*(\d{3,9})/) || up.match(/N[ÚU]MERO[:\s]*(\d{3,9})/);
+  if (mn) nota = mn[1];
+
+  return { peso, valor, tipo, parceiro, nota };
+}
+
+async function processarPDF(file) {
+  const statusEl = document.getElementById('pdfStatus');
+  statusEl.textContent = 'Lendo PDF...';
+  try {
+    const texto = await extrairTextoPDF(file);
+    const dados = heuristicaExtrair(texto);
+
+    if (dados.peso) document.getElementById('fPeso').value = dados.peso;
+    if (dados.valor) document.getElementById('fValor').value = dados.valor;
+    if (dados.tipo) document.getElementById('fTipo').value = dados.tipo;
+    if (dados.parceiro) document.getElementById('fParceiro').value = dados.parceiro;
+    if (dados.nota) document.getElementById('fNota').value = dados.nota;
+
+    window.__origemAtual = 'pdf';
+    document.getElementById('origemBadge').innerHTML = '<span class="badge badge-auto">lido do PDF — confira</span>';
+
+    const achou = [dados.peso && 'peso', dados.valor && 'valor', dados.tipo && 'tipo', dados.parceiro && 'parceiro'].filter(Boolean);
+    statusEl.textContent = achou.length
+      ? 'Encontrado automaticamente: ' + achou.join(', ') + '. Confira os campos antes de salvar.'
+      : 'Não consegui identificar os dados automaticamente (nota pode ser uma imagem escaneada). Preencha manualmente.';
+
+    document.getElementById('fData').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (err) {
+    statusEl.textContent = 'Não consegui ler este PDF automaticamente. Preencha manualmente.';
+    window.__origemAtual = 'pdf';
+  }
+}
+
+/* Recebe PDF compartilhado do WhatsApp via Web Share Target (guardado pelo service worker) */
+async function checarPdfCompartilhado() {
+  if (new URLSearchParams(location.search).get('shared') !== '1') return;
+  history.replaceState(null, '', location.pathname);
+  try {
+    const cache = await caches.open('aparas-share-v1');
+    const resp = await cache.match('./shared-pdf');
+    if (resp) {
+      const blob = await resp.blob();
+      await cache.delete('./shared-pdf');
+      const file = new File([blob], 'compartilhado.pdf', { type: 'application/pdf' });
+      processarPDF(file);
+    }
+  } catch (e) { /* sem cache disponível, ignora */ }
+}
+
+/* ===================== FECHAMENTO ===================== */
+function preencherSeletorMeses() {
+  const sel = document.getElementById('mesFechamento');
+  const atual = new Date();
+  const opts = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(atual.getFullYear(), atual.getMonth() - i, 1);
+    const chave = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    opts.push(`<option value="${chave}">${nomeMes(chave)}</option>`);
+  }
+  sel.innerHTML = opts.join('');
+  sel.value = mesAtual();
+}
+
+function calcularBalanco(mes) {
+  const lanc = getLancamentos(mes);
+  const entrada = lanc.filter(x => x.tipo === 'compra_bobina').reduce((s, x) => s + x.peso, 0);
+  const saidaChapa = lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + x.peso, 0);
+  const saidaApara = lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + x.peso, 0);
+
+  const fech = getFechamento(mes) || {};
+  const fechAnterior = getFechamento(mesAnterior(mes));
+
+  const estoqueInicialAuto = fechAnterior && fechAnterior.estoqueFinal != null;
+  const estoqueInicial = fech.estoqueInicial != null ? fech.estoqueInicial : (estoqueInicialAuto ? fechAnterior.estoqueFinal : 0);
+
+  const subtotal = estoqueInicial + entrada;
+  const teorico = subtotal - saidaChapa - saidaApara;
+  const estoqueFinal = fech.estoqueFinal != null ? fech.estoqueFinal : null;
+
+  const perda = estoqueFinal != null ? teorico - estoqueFinal : null;
+  const percPerda = perda != null && subtotal > 0 ? (perda / subtotal) * 100 : null;
+
+  return { entrada, saidaChapa, saidaApara, estoqueInicial, estoqueInicialAuto, subtotal, teorico, estoqueFinal, perda, percPerda, meta: fech.meta != null ? fech.meta : 8 };
+}
+
+function atualizarFechamento() {
+  const mes = document.getElementById('mesFechamento').value || mesAtual();
+  const b = calcularBalanco(mes);
+
+  document.getElementById('estoqueInicial').value = b.estoqueInicial || '';
+  document.getElementById('estoqueInicialBadge').classList.toggle('hidden', !b.estoqueInicialAuto);
+  document.getElementById('estoqueInicialBadge').textContent = b.estoqueInicialAuto ? 'auto (mês anterior)' : 'informe manualmente';
+
+  document.getElementById('vEntrada').textContent = fmt(b.entrada) + ' kg';
+  document.getElementById('vSubtotal').textContent = fmt(b.subtotal) + ' kg';
+  document.getElementById('vSaidaChapa').textContent = fmt(b.saidaChapa) + ' kg';
+  document.getElementById('vSaidaApara').textContent = fmt(b.saidaApara) + ' kg';
+  document.getElementById('vTeorico').textContent = fmt(b.teorico) + ' kg';
+  document.getElementById('estoqueFinal').value = b.estoqueFinal != null ? b.estoqueFinal : '';
+  document.getElementById('metaPerda').value = b.meta;
+
+  const box = document.getElementById('perdaBox');
+  const pctEl = document.getElementById('perdaPct');
+  const subEl = document.getElementById('perdaSub');
+
+  if (b.percPerda == null) {
+    box.className = 'perda-box neutral';
+    pctEl.textContent = '--%';
+    subEl.textContent = 'Informe o estoque final para calcular a perda';
+  } else {
+    const dentroDaMeta = b.percPerda <= b.meta;
+    box.className = 'perda-box ' + (dentroDaMeta ? 'ok' : 'warn');
+    pctEl.textContent = b.percPerda.toFixed(1) + '%';
+    subEl.textContent = 'Perda: ' + fmt(b.perda) + ' kg · meta ' + b.meta + '% · ' + (dentroDaMeta ? '✅ dentro da meta' : '⚠️ acima da meta');
+  }
+}
+
+document.getElementById('mesFechamento').addEventListener('change', atualizarFechamento);
+document.getElementById('metaPerda').addEventListener('change', () => {
+  const mes = document.getElementById('mesFechamento').value;
+  salvarFechamento(mes, { meta: parseFloat(document.getElementById('metaPerda').value) || 8 });
+  atualizarFechamento();
+});
+
+document.getElementById('btnSalvarFechamento').addEventListener('click', () => {
+  const mes = document.getElementById('mesFechamento').value;
+  const estoqueInicial = parseFloat(document.getElementById('estoqueInicial').value);
+  const estoqueFinalRaw = document.getElementById('estoqueFinal').value;
+  salvarFechamento(mes, {
+    estoqueInicial: isNaN(estoqueInicial) ? null : estoqueInicial,
+    estoqueFinal: estoqueFinalRaw === '' ? null : parseFloat(estoqueFinalRaw),
+    meta: parseFloat(document.getElementById('metaPerda').value) || 8,
+    fechadoEm: new Date().toISOString()
+  });
+  atualizarFechamento();
+  toast('Fechamento salvo');
+});
+
+document.getElementById('btnExportarXlsx').addEventListener('click', () => {
+  const mes = document.getElementById('mesFechamento').value;
+  const b = calcularBalanco(mes);
+  const lanc = getLancamentos(mes).slice().sort((a, b2) => a.data.localeCompare(b2.data));
+
+  const wb = XLSX.utils.book_new();
+
+  const detalhe = [['Data', 'Tipo', 'Peso (kg)', 'Valor (R$)', 'Fornecedor/Cliente', 'Nº Nota', 'Origem']];
+  lanc.forEach(x => detalhe.push([fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.peso, x.valor || '', x.parceiro || '', x.nota || '', x.origem]));
+  const wsDet = XLSX.utils.aoa_to_sheet(detalhe);
+  XLSX.utils.book_append_sheet(wb, wsDet, 'Lançamentos');
+
+  const resumo = [
+    ['Perda de papel', nomeMes(mes)],
+    [],
+    ['Estoque inicial (kg)', b.estoqueInicial],
+    ['+ Entrou (compra de bobina)', b.entrada],
+    ['Estoque inicial + entrada', b.subtotal],
+    ['- Saiu em chapa (produção)', b.saidaChapa],
+    ['- Saiu de aparas', b.saidaApara],
+    ['Estoque teórico final', b.teorico],
+    ['Estoque final informado', b.estoqueFinal],
+    ['Perda (kg)', b.perda],
+    ['% Perda', b.percPerda != null ? b.percPerda.toFixed(2) + '%' : ''],
+    ['Meta (%)', b.meta]
+  ];
+  const wsRes = XLSX.utils.aoa_to_sheet(resumo);
+  XLSX.utils.book_append_sheet(wb, wsRes, 'Resumo');
+
+  XLSX.writeFile(wb, 'Perda_Papel_' + mes + '.xlsx');
+});
+
+document.getElementById('btnCopiarResumo').addEventListener('click', () => {
+  const mes = document.getElementById('mesFechamento').value;
+  const b = calcularBalanco(mes);
+  const [ano, mesNum] = mes.split('-').map(Number);
+  const dataIni = '01/' + String(mesNum).padStart(2, '0');
+  const prox = new Date(ano, mesNum, 1);
+  const dataFim = '01/' + String(prox.getMonth() + 1).padStart(2, '0');
+
+  const linhas = [
+    '*Perda papel ' + MESES_NOME[mesNum - 1] + ' *',
+    '',
+    dataIni + '  Estoque inicial',
+    fmt(b.estoqueInicial) + ' 👍' + (b.estoqueInicialAuto ? ' (estimado)' : ''),
+    '',
+    '+ Entrou ton de papel no mês',
+    fmt(b.entrada) + ' 👍',
+    '',
+    'Estoque inicial + o que entrou',
+    fmt(b.subtotal) + ' 👍',
+    '',
+    'Menos (saiu em chapa no mês)',
+    fmt(b.saidaChapa) + ' 👍',
+    '',
+    'Menos (saiu de aparas no mês)',
+    fmt(b.saidaApara) + ' 👍',
+    '',
+    dataFim + ' sobrou em Estoque',
+    (b.estoqueFinal != null ? fmt(b.estoqueFinal) : '?') + ' 👍',
+    '',
+    'Perda: ' + (b.perda != null ? fmt(b.perda) + ' kg' : '?') + (b.percPerda != null ? ' (' + b.percPerda.toFixed(1) + '%)' : ''),
+    b.percPerda != null ? (b.percPerda <= b.meta ? '✅ dentro da meta de ' + b.meta + '%' : '⚠️ acima da meta de ' + b.meta + '%') : ''
+  ];
+  const texto = linhas.join('\n');
+
+  const area = document.getElementById('resumoTexto');
+  area.value = texto;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texto).then(() => toast('Resumo copiado! Cole no WhatsApp')).catch(() => {
+      area.classList.remove('hidden');
+      toast('Não deu pra copiar automático — selecione o texto abaixo');
+    });
+  } else {
+    area.classList.remove('hidden');
+    toast('Selecione e copie o texto abaixo');
+  }
+});
+
+/* ===================== HISTÓRICO ===================== */
+function renderHistorico() {
+  const todos = lerLS(LS_FECH);
+  const meses = Object.keys(todos).sort().reverse();
+  const el = document.getElementById('listaHistorico');
+  if (meses.length === 0) {
+    el.innerHTML = '<div class="empty">Nenhum fechamento salvo ainda.</div>';
+    return;
+  }
+  el.innerHTML = meses.map(mes => {
+    const b = calcularBalanco(mes);
+    const cor = b.percPerda == null ? '#667' : (b.percPerda <= b.meta ? '#1e8449' : '#c0392b');
+    return `<div class="hist-row">
+      <div class="hist-mes">${nomeMes(mes)}</div>
+      <div class="hist-pct" style="color:${cor}">${b.percPerda != null ? b.percPerda.toFixed(1) + '%' : '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ===================== INIT ===================== */
+preencherSeletorMeses();
+renderLista();
+checarPdfCompartilhado();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "name": "Controle de Aparas - Perda de Papel - Prime Ondulados",
+  "short_name": "Perda Papel",
+  "description": "Controle mensal de perda de papel (aparas) da Prime Ondulados",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1a56a0",
+  "background_color": "#d6e4f4",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "share_target": {
+    "action": "./share-pdf",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        { "name": "pdf", "accept": ["application/pdf", ".pdf"] }
+      ]
+    }
+  }
+}
