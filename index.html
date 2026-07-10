@@ -266,10 +266,10 @@ textarea {
   <div id="tab-lancar" class="tab-content">
 
     <div class="card">
-      <div class="card-title">📎 Importar notas em PDF</div>
-      <input type="file" id="pdfInput" accept="application/pdf" multiple class="hidden">
-      <button class="btn btn-primary" id="btnAnexarPdf">Anexar PDFs das notas (pode escolher várias)</button>
-      <p class="hint">Selecione de uma vez todas as notas do dia — ex: as 21 de sexta-feira. Ou direto do WhatsApp: selecione várias notas lá e toque em <b>Compartilhar</b> escolhendo este app. Ele lê peso, tipo, fornecedor/cliente, data e número de cada uma (o nome do arquivo, tipo "NF 1404 ABAPEL", já dá o número e o cliente) e monta uma fila pra você conferir e dar OK.</p>
+      <div class="card-title">🤖 Importar OCR (NotebookLM)</div>
+      <input type="file" id="ocrInput" accept=".json,.txt,application/json,text/plain" multiple class="hidden">
+      <button class="btn btn-primary" id="btnImportarOcr">Importar arquivo(s) JSON/TXT do NotebookLM</button>
+      <p class="hint">Extraia as notas no NotebookLM (pergunte pelo peso líquido, cliente/fornecedor, número da nota, data e tipo) e salve a resposta como .json ou .txt. Pode subir vários arquivos de uma vez — cada nota extraída entra na fila de conferência abaixo pra você dar OK.</p>
       <div id="pdfStatus" class="hint"></div>
     </div>
 
@@ -370,12 +370,7 @@ textarea {
 <div id="toast" class="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-if (typeof pdfjsLib !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
-
 /* ===================== STORAGE ===================== */
 const LS_LANC = 'aparas_lancamentos_v1';
 const LS_FECH = 'aparas_fechamentos_v1';
@@ -422,20 +417,6 @@ function mesAtual() { return hojeISO().slice(0, 7); }
 function fmt(n) { if (n == null || isNaN(n)) return '0'; return Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 0 }); }
 function fmtDataBR(iso) { const [a,m,d]=iso.split('-'); return d+'/'+m; }
 
-function parseNumeroBR(str) {
-  if (!str) return null;
-  str = String(str).replace(/[^\d.,\-]/g, '');
-  if (!str) return null;
-  if (str.includes(',')) {
-    str = str.replace(/\./g, '').replace(',', '.');
-  } else {
-    const parts = str.split('.');
-    if (parts.length > 1 && parts[parts.length - 1].length === 3) str = parts.join('');
-  }
-  const n = parseFloat(str);
-  return isNaN(n) ? null : n;
-}
-
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -445,15 +426,59 @@ function toast(msg) {
 
 const TIPO_LABEL = { compra_bobina: 'Compra de bobina', venda_chapa: 'Venda de chapa', venda_apara: 'Venda de aparas', venda_papel_ondulado: 'Papel Ondulado' };
 
-/* Nomes de arquivo seguem o padrão "NF <número> <FORNECEDOR/CLIENTE>.pdf" nas
-   notas da Prime — mais confiável que tentar ler o texto do PDF, e serve como
-   referência pra busca futura. */
-function extrairDoNomeArquivo(nomeArquivo) {
-  const semExt = String(nomeArquivo || '').replace(/\.pdf$/i, '').trim();
-  const m = semExt.match(/^NF\s*0*(\d+)\s+(.+)$/i);
-  if (!m) return { nota: null, parceiro: null };
-  const parceiro = m[2].split(' - ')[0].trim();
-  return { nota: m[1], parceiro: parceiro || null };
+/* Tenta fazer JSON.parse tolerando lixo em volta (texto solto, cerca ```json … ```
+   que o NotebookLM costuma devolver junto) — mesma lógica usada no app da onduladeira. */
+function parseJSONTolerante(texto) {
+  const limpo = String(texto || '').replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
+  try { return JSON.parse(limpo); } catch (e) {}
+  const iniArr = limpo.indexOf('['), iniObj = limpo.indexOf('{');
+  const inicios = [iniArr, iniObj].filter(i => i >= 0);
+  if (!inicios.length) return null;
+  const ini = Math.min(...inicios);
+  const fimArr = limpo.lastIndexOf(']'), fimObj = limpo.lastIndexOf('}');
+  const fim = Math.max(fimArr, fimObj);
+  if (fim <= ini) return null;
+  try { return JSON.parse(limpo.slice(ini, fim + 1)); } catch (e) { return null; }
+}
+
+/* Converte data em vários formatos comuns pro padrão ISO usado internamente. */
+function parseDataParaISO(s) {
+  if (!s) return null;
+  s = String(s).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return m[1] + '-' + m[2] + '-' + m[3];
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+  return null;
+}
+
+/* Mapeia o "tipo" em texto livre que o NotebookLM devolver pros códigos internos. */
+function parseTipoOCR(s) {
+  const up = String(s || '').toUpperCase();
+  if (/APARA/.test(up)) return 'venda_apara';
+  if (/ONDULADO/.test(up)) return 'venda_papel_ondulado';
+  if (/CHAPA/.test(up)) return 'venda_chapa';
+  if (/BOBINA|MACULATURA|COMPRA|ENTRADA/.test(up)) return 'compra_bobina';
+  return null;
+}
+
+/* Lê um item de nota vindo do JSON do NotebookLM, tolerando variações de nome de campo
+   (o prompt pede nomes em português, mas aceita inglês/maiúsculas também). */
+function mapearItemOCR(item) {
+  const pega = (...chaves) => {
+    for (const k of chaves) {
+      if (item[k] !== undefined && item[k] !== null && item[k] !== '') return item[k];
+    }
+    return null;
+  };
+  return {
+    parceiro: pega('cliente_fornecedor', 'clienteFornecedor', 'cliente', 'fornecedor', 'Cliente', 'Fornecedor'),
+    nota: pega('numero_nota', 'numeroNota', 'nota', 'Nota', 'NF', 'nf') != null ? String(pega('numero_nota', 'numeroNota', 'nota', 'Nota', 'NF', 'nf')) : null,
+    data: parseDataParaISO(pega('data', 'Data', 'data_emissao', 'dataEmissao')),
+    tipo: parseTipoOCR(pega('tipo', 'Tipo')),
+    peso: (() => { const v = pega('peso_liquido_kg', 'pesoLiquidoKg', 'peso_liquido', 'peso', 'Peso'); const n = parseFloat(String(v).replace(/\./g, '').replace(',', '.')); return isNaN(n) ? null : n; })(),
+    devolucao: !!pega('devolucao', 'Devolucao', 'devolução')
+  };
 }
 
 /* ===================== TABS ===================== */
@@ -545,147 +570,65 @@ document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
 
 document.getElementById('btnCancelarEdicao').addEventListener('click', limparForm);
 
-/* ===================== IMPORTAÇÃO DE PDF EM LOTE ===================== */
-document.getElementById('btnAnexarPdf').addEventListener('click', () => document.getElementById('pdfInput').click());
-document.getElementById('pdfInput').addEventListener('change', (e) => {
+/* ===================== IMPORTAÇÃO OCR (NotebookLM) ===================== */
+document.getElementById('btnImportarOcr').addEventListener('click', () => document.getElementById('ocrInput').click());
+document.getElementById('ocrInput').addEventListener('change', (e) => {
   const files = Array.from(e.target.files || []);
-  if (files.length) processarPDFsEmLote(files);
+  if (files.length) processarArquivosOCR(files);
   e.target.value = '';
 });
 
-async function extrairTextoPDF(file) {
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-  let texto = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    // Reconstroi a ordem de leitura agrupando os itens por linha (mesma
-    // coordenada Y, com tolerância) e ordenando cada linha por X. Sem isso o
-    // pdf.js entrega os itens na ordem em que foram desenhados no PDF, que
-    // em formulários (DANFE) fica embaralhada e separa rótulo de valor.
-    const linhas = [];
-    content.items.forEach(it => {
-      const y = it.transform[5];
-      let linha = linhas.find(l => Math.abs(l.y - y) <= 2);
-      if (!linha) { linha = { y, itens: [] }; linhas.push(linha); }
-      linha.itens.push({ x: it.transform[4], str: it.str });
-    });
-    linhas.sort((a, b) => b.y - a.y);
-    linhas.forEach(l => {
-      l.itens.sort((a, b) => a.x - b.x);
-      texto += l.itens.map(it => it.str).join(' ') + '\n';
-    });
-  }
-  return texto;
-}
-
-/* Extrai as linhas da tabela "DADOS DOS PRODUTOS" de um DANFE (padrão Teorema
-   Sistemas usado nas notas da Prime): código(6) descrição ncm(8) cst(3) cfop(4) unid qtde ... */
-function extrairProdutosDANFE(texto) {
-  const linhas = [];
-  const re = /(\d{6})\s+([A-ZÀ-Ú0-9.,\/x× -]+?)\s+(\d{8})\s+(\d{3})\s+(\d{4})\s+(KG|TN|UN|PC|CX|MT|M2|M3|LT)\s+([\d.,]+)/gi;
-  let m;
-  while ((m = re.exec(texto))) {
-    linhas.push({ descricao: m[2].trim(), unid: m[6].toUpperCase(), qtde: parseNumeroBR(m[7]) });
-  }
-  return linhas;
-}
-
-function pesoDaLinhaKg(linha) {
-  if (linha.unid === 'KG') return linha.qtde;
-  if (linha.unid === 'TN') return linha.qtde * 1000; // qtde em toneladas
-  return null; // UN e outras unidades não dão o peso direto
-}
-
-/* Quando o produto é vendido em UN (ex: chapa por folha), o peso só existe no
-   campo "Peso Líquido" da seção Transportador/Volumes Transportados, e nesse
-   ERP esse campo vem em TONELADAS (conferido comparando com o total da
-   tabela de produtos em notas de bobina/maculatura). */
-function extrairPesoLiquidoTransporteKg(texto) {
-  const m = texto.match(/PESO\s*L[ÍI]QUIDO([\s\S]*?)DADOS DOS PRODUTOS/i);
-  if (!m) return null;
-  const nums = m[1].match(/\d+[.,]\d{2,3}/g);
-  if (!nums || !nums.length) return null;
-  const ton = parseNumeroBR(nums[nums.length - 1]);
-  return ton != null ? ton * 1000 : null;
-}
-
-function heuristicaExtrair(texto) {
-  const up = texto.toUpperCase();
-
-  // Canhoto do DANFE: "EMISSÃO: DD/MM/AAAA VALOR TOTAL: X DESTINATÁRIO: NOME - ENDEREÇO. Nº NNN"
-  let data = null, valor = null, parceiro = null, nota = null;
-  const mCab = up.match(/EMISS[ÃA]O:\s*(\d{2})\/(\d{2})\/(\d{4})\s*VALOR TOTAL:\s*([\d.,]+)\s*DESTINAT[ÁA]RIO:\s*(.+?)\s*-\s*.+?N[ºO]\.?\s*([\d.]+)/);
-  if (mCab) {
-    data = mCab[3] + '-' + mCab[2] + '-' + mCab[1];
-    valor = parseNumeroBR(mCab[4]);
-    parceiro = mCab[5].trim().replace(/\s{2,}/g, ' ');
-    nota = mCab[6].replace(/\./g, '').replace(/^0+/, '');
-  }
-
-  // Natureza da operação: texto livre logo antes do protocolo de autorização (15 dígitos + data/hora)
-  let natureza = '';
-  const mNat = up.match(/([A-ZÀ-Ú0-9.,\/ ]{5,60}?)\s+\d{15}\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}/);
-  if (mNat) natureza = mNat[1].trim();
-  const devolucao = /DEVOLU/.test(natureza);
-
-  // Produtos e classificação do tipo pela descrição
-  const produtos = extrairProdutosDANFE(texto);
-  const descricoes = produtos.map(p => p.descricao.toUpperCase()).join(' | ');
-  let tipo = null;
-  if (/APARA/.test(descricoes)) tipo = 'venda_apara';
-  else if (/CHAPA/.test(descricoes)) tipo = 'venda_chapa';
-  else if (/BOBINA|MACULATURA/.test(descricoes)) tipo = 'compra_bobina';
-
-  // Peso: soma direta das linhas em KG/TN da tabela de produtos; se o produto
-  // for vendido em UN (sem peso na tabela), cai para o peso líquido do transporte
-  let pesoDireto = 0, temPesoDireto = false;
-  produtos.forEach(p => {
-    const pk = pesoDaLinhaKg(p);
-    if (pk != null) { pesoDireto += pk; temPesoDireto = true; }
+function lerArquivoComoTexto(file) {
+  return new Promise((resolve) => {
+    const r = new FileReader();
+    r.onload = ev => resolve(ev.target.result || '');
+    r.onerror = () => resolve('');
+    r.readAsText(file, 'utf-8');
   });
-  let peso = null, pesoOrigem = null;
-  if (temPesoDireto) { peso = pesoDireto; pesoOrigem = 'produto'; }
-  else {
-    const pl = extrairPesoLiquidoTransporteKg(texto);
-    if (pl != null) { peso = pl; pesoOrigem = 'transporte'; }
-  }
-
-  return { data, peso, pesoOrigem, valor, tipo, parceiro, nota, natureza, devolucao };
 }
 
-/* Lê várias notas de uma vez e joga cada uma na fila de conferência (não salva direto) */
-async function processarPDFsEmLote(files) {
+/* Adiciona um item na fila a partir dos dados já mapeados de uma nota extraída. */
+function empilharItemOCR(fila, arquivoNome, dados) {
+  fila.push({
+    id: novoId(),
+    arquivo: arquivoNome,
+    data: dados.data || hojeISO(),
+    peso: dados.peso != null ? Math.round(dados.peso * 100) / 100 : null,
+    pesoOrigem: dados.peso != null ? 'ocr' : null,
+    tipo: dados.tipo || null,
+    parceiro: dados.parceiro || '',
+    nota: dados.nota || '',
+    devolucao: !!dados.devolucao
+  });
+}
+
+/* Lê os arquivos .json/.txt exportados do NotebookLM e joga cada nota extraída
+   na fila de conferência (não salva direto). Aceita tanto um array de notas
+   num único arquivo quanto um arquivo por nota. */
+async function processarArquivosOCR(files) {
   const statusEl = document.getElementById('pdfStatus');
   const fila = getFila();
-  let lidas = 0;
+  let lidos = 0, notas = 0;
   for (const file of files) {
-    statusEl.textContent = 'Lendo nota ' + (lidas + 1) + ' de ' + files.length + '...';
-    let dados = {};
-    try {
-      const texto = await extrairTextoPDF(file);
-      dados = heuristicaExtrair(texto);
-    } catch (err) { /* nota pode ser imagem escaneada; entra na fila sem dados pra revisão manual */ }
-    // O nome do arquivo ("NF 1404 ABAPEL.pdf") é mais confiável que o texto
-    // do PDF pra pegar número da nota e fornecedor/cliente.
-    const doNome = extrairDoNomeArquivo(file.name);
-    fila.push({
-      id: novoId(),
-      arquivo: file.name,
-      data: dados.data || hojeISO(),
-      peso: dados.peso != null ? Math.round(dados.peso * 100) / 100 : null,
-      pesoOrigem: dados.pesoOrigem || null,
-      tipo: dados.tipo || null,
-      parceiro: doNome.parceiro || dados.parceiro || '',
-      nota: doNome.nota || dados.nota || '',
-      devolucao: !!dados.devolucao
-    });
-    lidas++;
+    statusEl.textContent = 'Lendo arquivo ' + (lidos + 1) + ' de ' + files.length + '...';
+    const texto = await lerArquivoComoTexto(file);
+    const parsed = parseJSONTolerante(texto);
+
+    if (Array.isArray(parsed) && parsed.length) {
+      parsed.forEach(item => { empilharItemOCR(fila, file.name, mapearItemOCR(item)); notas++; });
+    } else if (parsed && typeof parsed === 'object') {
+      empilharItemOCR(fila, file.name, mapearItemOCR(parsed));
+      notas++;
+    } else {
+      // Não deu pra entender como JSON — entra na fila vazia pra revisão manual
+      empilharItemOCR(fila, file.name, {});
+      notas++;
+    }
+    lidos++;
   }
   salvarFila(fila);
   renderFila();
-  statusEl.textContent = lidas + (lidas === 1 ? ' nota lida' : ' notas lidas') + '. Confira a fila abaixo e vá dando OK em cada uma.';
+  statusEl.textContent = notas + (notas === 1 ? ' nota lida' : ' notas lidas') + ' de ' + lidos + ' arquivo(s). Confira a fila abaixo e vá dando OK em cada uma.';
   document.getElementById('filaCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -728,8 +671,7 @@ function renderFila() {
         ↩️ Devolução (desconta em vez de somar)
       </label>
 
-      ${faltaAlgo ? '<div class="hint" style="color:#c0392b;font-weight:700;margin-top:8px">⚠️ Não consegui ler tudo sozinho — confira peso e tipo antes de confirmar.</div>' : ''}
-      ${it.pesoOrigem === 'transporte' ? '<div class="hint" style="margin-top:6px">Peso estimado pelo campo "Peso Líquido" do transporte, não pela tabela de produtos.</div>' : ''}
+      ${faltaAlgo ? '<div class="hint" style="color:#c0392b;font-weight:700;margin-top:8px">⚠️ Não veio tudo no JSON — confira peso e tipo antes de confirmar.</div>' : ''}
 
       <div class="grid2" style="margin-top:12px">
         <button class="btn btn-outline btn-sm fila-descartar" style="margin-top:0">Descartar</button>
@@ -790,9 +732,9 @@ function descartarItemFila(id) {
   renderFila();
 }
 
-/* Recebe PDFs compartilhados do WhatsApp via Web Share Target (guardados pelo service worker).
-   Suporta várias notas compartilhadas juntas de uma vez. */
-async function checarPdfCompartilhado() {
+/* Recebe arquivos JSON/TXT do NotebookLM compartilhados via Web Share Target
+   (guardados pelo service worker). Suporta vários arquivos de uma vez. */
+async function checarArquivosCompartilhados() {
   if (new URLSearchParams(location.search).get('shared') !== '1') return;
   history.replaceState(null, '', location.pathname);
   try {
@@ -800,14 +742,14 @@ async function checarPdfCompartilhado() {
     const arquivos = [];
     let i = 0;
     while (true) {
-      const resp = await cache.match('./shared-pdf-' + i);
+      const resp = await cache.match('./shared-ocr-' + i);
       if (!resp) break;
       const blob = await resp.blob();
-      await cache.delete('./shared-pdf-' + i);
-      arquivos.push(new File([blob], 'compartilhado-' + (i + 1) + '.pdf', { type: 'application/pdf' }));
+      await cache.delete('./shared-ocr-' + i);
+      arquivos.push(new File([blob], 'compartilhado-' + (i + 1) + '.txt', { type: 'text/plain' }));
       i++;
     }
-    if (arquivos.length) processarPDFsEmLote(arquivos);
+    if (arquivos.length) processarArquivosOCR(arquivos);
   } catch (e) { /* sem cache disponível, ignora */ }
 }
 
@@ -1009,7 +951,7 @@ function renderHistorico() {
 preencherSeletorMeses();
 renderLista();
 renderFila();
-checarPdfCompartilhado();
+checarArquivosCompartilhados();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
