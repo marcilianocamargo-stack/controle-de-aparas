@@ -274,7 +274,10 @@ textarea {
     </div>
 
     <div class="card hidden" id="filaCard">
-      <div class="card-title">🗂️ Fila de conferência <span id="filaCount" class="badge badge-auto"></span></div>
+      <div class="card-title" style="justify-content:space-between">
+        <span>🗂️ Fila de conferência <span id="filaCount" class="badge badge-auto"></span></span>
+        <button class="btn btn-outline btn-sm" id="btnLimparFila" style="margin-top:0;width:auto;padding:8px 14px">Limpar fila</button>
+      </div>
       <div id="filaLista"></div>
     </div>
 
@@ -731,6 +734,15 @@ function descartarItemFila(id) {
   salvarFila(fila);
   renderFila();
 }
+
+document.getElementById('btnLimparFila').addEventListener('click', () => {
+  const fila = getFila();
+  if (!fila.length) return;
+  if (!confirm('Descartar todos os ' + fila.length + ' itens da fila? Nada é apagado dos lançamentos já confirmados, só limpa o que ainda está pendente de conferência.')) return;
+  salvarFila([]);
+  renderFila();
+  toast('Fila limpa');
+});
 
 /* Recebe arquivos JSON/TXT do NotebookLM compartilhados via Web Share Target
    (guardados pelo service worker). Suporta vários arquivos de uma vez. */
