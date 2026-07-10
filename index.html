@@ -302,6 +302,11 @@ textarea {
       <label class="lbl">Nº da nota (opcional)</label>
       <input type="text" id="fNota" placeholder="Nº NF-e">
 
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:#444;font-weight:700;cursor:pointer">
+        <input type="checkbox" id="fDevolucao" style="width:20px;height:20px">
+        ↩️ Devolução (desconta em vez de somar)
+      </label>
+
       <button class="btn btn-primary" id="btnSalvarLancamento">Salvar lançamento</button>
       <button class="btn btn-ghost hidden" id="btnCancelarEdicao">Cancelar</button>
     </div>
@@ -464,11 +469,11 @@ function renderLista() {
   lista.innerHTML = itens.map(it => `
     <div class="entry">
       <div>
-        <div class="entry-tipo ${it.tipo}">${TIPO_LABEL[it.tipo]}</div>
+        <div class="entry-tipo ${it.tipo}">${TIPO_LABEL[it.tipo]} ${it.devolucao ? '<span class="badge badge-warn">↩️ devolução</span>' : ''}</div>
         <div class="entry-info">${fmtDataBR(it.data)} · ${it.parceiro || 'sem nome'} ${it.nota ? '· NF ' + it.nota : ''} ${it.origem === 'pdf' ? '· 📎' : ''}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
-        <div class="entry-peso">${fmt(it.peso)} kg</div>
+        <div class="entry-peso">${it.devolucao ? '−' : ''}${fmt(it.peso)} kg</div>
         <button class="entry-del" data-id="${it.id}" title="Excluir">✕</button>
       </div>
     </div>
@@ -488,6 +493,7 @@ function limparForm() {
   document.getElementById('fValor').value = '';
   document.getElementById('fParceiro').value = '';
   document.getElementById('fNota').value = '';
+  document.getElementById('fDevolucao').checked = false;
   document.getElementById('origemBadge').innerHTML = '';
   editandoId = null;
   document.getElementById('btnCancelarEdicao').classList.add('hidden');
@@ -507,6 +513,7 @@ document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
     valor: parseFloat(document.getElementById('fValor').value) || null,
     parceiro: document.getElementById('fParceiro').value.trim(),
     nota: document.getElementById('fNota').value.trim(),
+    devolucao: document.getElementById('fDevolucao').checked,
     origem: window.__origemAtual || 'manual',
     criadoEm: new Date().toISOString()
   };
@@ -541,36 +548,99 @@ async function extrairTextoPDF(file) {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    texto += content.items.map(it => it.str).join(' ') + '\n';
+    // Reconstroi a ordem de leitura agrupando os itens por linha (mesma
+    // coordenada Y, com tolerância) e ordenando cada linha por X. Sem isso o
+    // pdf.js entrega os itens na ordem em que foram desenhados no PDF, que
+    // em formulários (DANFE) fica embaralhada e separa rótulo de valor.
+    const linhas = [];
+    content.items.forEach(it => {
+      const y = it.transform[5];
+      let linha = linhas.find(l => Math.abs(l.y - y) <= 2);
+      if (!linha) { linha = { y, itens: [] }; linhas.push(linha); }
+      linha.itens.push({ x: it.transform[4], str: it.str });
+    });
+    linhas.sort((a, b) => b.y - a.y);
+    linhas.forEach(l => {
+      l.itens.sort((a, b) => a.x - b.x);
+      texto += l.itens.map(it => it.str).join(' ') + '\n';
+    });
   }
   return texto;
+}
+
+/* Extrai as linhas da tabela "DADOS DOS PRODUTOS" de um DANFE (padrão Teorema
+   Sistemas usado nas notas da Prime): código(6) descrição ncm(8) cst(3) cfop(4) unid qtde ... */
+function extrairProdutosDANFE(texto) {
+  const linhas = [];
+  const re = /(\d{6})\s+([A-ZÀ-Ú0-9.,\/x× -]+?)\s+(\d{8})\s+(\d{3})\s+(\d{4})\s+(KG|TN|UN|PC|CX|MT|M2|M3|LT)\s+([\d.,]+)/gi;
+  let m;
+  while ((m = re.exec(texto))) {
+    linhas.push({ descricao: m[2].trim(), unid: m[6].toUpperCase(), qtde: parseNumeroBR(m[7]) });
+  }
+  return linhas;
+}
+
+function pesoDaLinhaKg(linha) {
+  if (linha.unid === 'KG') return linha.qtde;
+  if (linha.unid === 'TN') return linha.qtde * 1000; // qtde em toneladas
+  return null; // UN e outras unidades não dão o peso direto
+}
+
+/* Quando o produto é vendido em UN (ex: chapa por folha), o peso só existe no
+   campo "Peso Líquido" da seção Transportador/Volumes Transportados, e nesse
+   ERP esse campo vem em TONELADAS (conferido comparando com o total da
+   tabela de produtos em notas de bobina/maculatura). */
+function extrairPesoLiquidoTransporteKg(texto) {
+  const m = texto.match(/PESO\s*L[ÍI]QUIDO([\s\S]*?)DADOS DOS PRODUTOS/i);
+  if (!m) return null;
+  const nums = m[1].match(/\d+[.,]\d{2,3}/g);
+  if (!nums || !nums.length) return null;
+  const ton = parseNumeroBR(nums[nums.length - 1]);
+  return ton != null ? ton * 1000 : null;
 }
 
 function heuristicaExtrair(texto) {
   const up = texto.toUpperCase();
 
-  let peso = null;
-  let m = up.match(/PESO\s*L[IÍ]QUIDO[:\s]*([\d.,]+)/) || up.match(/PESO\s*BRUTO[:\s]*([\d.,]+)/) || up.match(/([\d.,]+)\s*KG/);
-  if (m) peso = parseNumeroBR(m[1]);
+  // Canhoto do DANFE: "EMISSÃO: DD/MM/AAAA VALOR TOTAL: X DESTINATÁRIO: NOME - ENDEREÇO. Nº NNN"
+  let data = null, valor = null, parceiro = null, nota = null;
+  const mCab = up.match(/EMISS[ÃA]O:\s*(\d{2})\/(\d{2})\/(\d{4})\s*VALOR TOTAL:\s*([\d.,]+)\s*DESTINAT[ÁA]RIO:\s*(.+?)\s*-\s*.+?N[ºO]\.?\s*([\d.]+)/);
+  if (mCab) {
+    data = mCab[3] + '-' + mCab[2] + '-' + mCab[1];
+    valor = parseNumeroBR(mCab[4]);
+    parceiro = mCab[5].trim().replace(/\s{2,}/g, ' ');
+    nota = mCab[6].replace(/\./g, '').replace(/^0+/, '');
+  }
 
-  let valor = null;
-  let mv = up.match(/VALOR\s*TOTAL(?:\s*DA\s*NOTA)?[:\s]*R?\$?\s*([\d.,]+)/);
-  if (mv) valor = parseNumeroBR(mv[1]);
+  // Natureza da operação: texto livre logo antes do protocolo de autorização (15 dígitos + data/hora)
+  let natureza = '';
+  const mNat = up.match(/([A-ZÀ-Ú0-9.,\/ ]{5,60}?)\s+\d{15}\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}/);
+  if (mNat) natureza = mNat[1].trim();
+  const devolucao = /DEVOLU/.test(natureza);
 
+  // Produtos e classificação do tipo pela descrição
+  const produtos = extrairProdutosDANFE(texto);
+  const descricoes = produtos.map(p => p.descricao.toUpperCase()).join(' | ');
   let tipo = null;
-  if (up.includes('APARA')) tipo = 'venda_apara';
-  else if (up.includes('BOBINA') && (up.includes('COMPRA') || up.includes('ENTRADA'))) tipo = 'compra_bobina';
-  else if (up.includes('CHAPA') || up.includes('VENDA')) tipo = 'venda_chapa';
+  if (/APARA/.test(descricoes)) tipo = 'venda_apara';
+  else if (/CHAPA/.test(descricoes)) tipo = 'venda_chapa';
+  else if (/BOBINA|MACULATURA/.test(descricoes)) tipo = 'compra_bobina';
 
-  let parceiro = null;
-  let mp = up.match(/(?:DESTINAT[ÁA]RIO\s*\/?\s*REMETENTE|RAZ[ÃA]O\s*SOCIAL)[:\s]*([A-Z0-9À-Ú .\-]{5,60})/);
-  if (mp) parceiro = mp[1].trim().replace(/\s{2,}/g, ' ');
+  // Peso: soma direta das linhas em KG/TN da tabela de produtos; se o produto
+  // for vendido em UN (sem peso na tabela), cai para o peso líquido do transporte
+  let pesoDireto = 0, temPesoDireto = false;
+  produtos.forEach(p => {
+    const pk = pesoDaLinhaKg(p);
+    if (pk != null) { pesoDireto += pk; temPesoDireto = true; }
+  });
+  let peso = null, pesoOrigem = null;
+  if (temPesoDireto) { peso = pesoDireto; pesoOrigem = 'produto'; }
+  else {
+    const pl = extrairPesoLiquidoTransporteKg(texto);
+    if (pl != null) { peso = pl; pesoOrigem = 'transporte'; }
+  }
 
-  let nota = null;
-  let mn = up.match(/N[ºO°]\.?\s*(\d{3,9})/) || up.match(/N[ÚU]MERO[:\s]*(\d{3,9})/);
-  if (mn) nota = mn[1];
-
-  return { peso, valor, tipo, parceiro, nota };
+  return { data, peso, pesoOrigem, valor, tipo, parceiro, nota, natureza, devolucao };
 }
 
 async function processarPDF(file) {
@@ -580,19 +650,26 @@ async function processarPDF(file) {
     const texto = await extrairTextoPDF(file);
     const dados = heuristicaExtrair(texto);
 
-    if (dados.peso) document.getElementById('fPeso').value = dados.peso;
+    if (dados.data) document.getElementById('fData').value = dados.data;
+    if (dados.peso) document.getElementById('fPeso').value = Math.round(dados.peso * 100) / 100;
     if (dados.valor) document.getElementById('fValor').value = dados.valor;
     if (dados.tipo) document.getElementById('fTipo').value = dados.tipo;
     if (dados.parceiro) document.getElementById('fParceiro').value = dados.parceiro;
     if (dados.nota) document.getElementById('fNota').value = dados.nota;
+    document.getElementById('fDevolucao').checked = !!dados.devolucao;
 
     window.__origemAtual = 'pdf';
     document.getElementById('origemBadge').innerHTML = '<span class="badge badge-auto">lido do PDF — confira</span>';
 
     const achou = [dados.peso && 'peso', dados.valor && 'valor', dados.tipo && 'tipo', dados.parceiro && 'parceiro'].filter(Boolean);
-    statusEl.textContent = achou.length
+    let msg = achou.length
       ? 'Encontrado automaticamente: ' + achou.join(', ') + '. Confira os campos antes de salvar.'
-      : 'Não consegui identificar os dados automaticamente (nota pode ser uma imagem escaneada). Preencha manualmente.';
+      : 'Não consegui identificar os dados automaticamente (nota pode ser uma imagem escaneada, ou formato diferente). Preencha manualmente.';
+    if (dados.peso && dados.pesoOrigem === 'transporte') {
+      msg += ' (peso estimado pelo campo "Peso Líquido" do transporte, não pela tabela de produtos — confira com atenção)';
+    }
+    if (dados.devolucao) msg += ' Nota de devolução detectada — marcada para descontar do total.';
+    statusEl.textContent = msg;
 
     document.getElementById('fData').scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (err) {
@@ -631,11 +708,13 @@ function preencherSeletorMeses() {
   sel.value = mesAtual();
 }
 
+function pesoComSinal(x) { return x.devolucao ? -x.peso : x.peso; }
+
 function calcularBalanco(mes) {
   const lanc = getLancamentos(mes);
-  const entrada = lanc.filter(x => x.tipo === 'compra_bobina').reduce((s, x) => s + x.peso, 0);
-  const saidaChapa = lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + x.peso, 0);
-  const saidaApara = lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + x.peso, 0);
+  const entrada = lanc.filter(x => x.tipo === 'compra_bobina').reduce((s, x) => s + pesoComSinal(x), 0);
+  const saidaChapa = lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + pesoComSinal(x), 0);
+  const saidaApara = lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + pesoComSinal(x), 0);
 
   const fech = getFechamento(mes) || {};
   const fechAnterior = getFechamento(mesAnterior(mes));
@@ -713,8 +792,8 @@ document.getElementById('btnExportarXlsx').addEventListener('click', () => {
 
   const wb = XLSX.utils.book_new();
 
-  const detalhe = [['Data', 'Tipo', 'Peso (kg)', 'Valor (R$)', 'Fornecedor/Cliente', 'Nº Nota', 'Origem']];
-  lanc.forEach(x => detalhe.push([fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.peso, x.valor || '', x.parceiro || '', x.nota || '', x.origem]));
+  const detalhe = [['Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Valor (R$)', 'Fornecedor/Cliente', 'Nº Nota', 'Origem']];
+  lanc.forEach(x => detalhe.push([fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.valor || '', x.parceiro || '', x.nota || '', x.origem]));
   const wsDet = XLSX.utils.aoa_to_sheet(detalhe);
   XLSX.utils.book_append_sheet(wb, wsDet, 'Lançamentos');
 
