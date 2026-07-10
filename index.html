@@ -265,15 +265,20 @@ textarea {
   <div id="tab-lancar" class="tab-content">
 
     <div class="card">
-      <div class="card-title">📎 Importar nota em PDF</div>
-      <input type="file" id="pdfInput" accept="application/pdf" class="hidden">
-      <button class="btn btn-primary" id="btnAnexarPdf">Anexar PDF da nota</button>
-      <p class="hint">Ou, direto do WhatsApp: abra o PDF recebido, toque em <b>Compartilhar</b> e escolha este app. Ele tenta ler peso, valor e tipo sozinho — você confere antes de salvar.</p>
+      <div class="card-title">📎 Importar notas em PDF</div>
+      <input type="file" id="pdfInput" accept="application/pdf" multiple class="hidden">
+      <button class="btn btn-primary" id="btnAnexarPdf">Anexar PDFs das notas (pode escolher várias)</button>
+      <p class="hint">Selecione de uma vez todas as notas do dia — ex: as 21 de sexta-feira. Ou direto do WhatsApp: selecione várias notas lá e toque em <b>Compartilhar</b> escolhendo este app. Ele lê peso, valor, tipo, fornecedor/cliente, data e número de cada uma e monta uma fila pra você conferir e dar OK.</p>
       <div id="pdfStatus" class="hint"></div>
     </div>
 
+    <div class="card hidden" id="filaCard">
+      <div class="card-title">🗂️ Fila de conferência <span id="filaCount" class="badge badge-auto"></span></div>
+      <div id="filaLista"></div>
+    </div>
+
     <div class="card">
-      <div class="card-title">✍️ Lançamento <span id="origemBadge"></span></div>
+      <div class="card-title">✍️ Lançamento manual</div>
 
       <label class="lbl">Data</label>
       <input type="date" id="fData">
@@ -379,6 +384,7 @@ if (typeof pdfjsLib !== 'undefined') {
 /* ===================== STORAGE ===================== */
 const LS_LANC = 'aparas_lancamentos_v1';
 const LS_FECH = 'aparas_fechamentos_v1';
+const LS_FILA = 'aparas_fila_revisao_v1';
 
 function lerLS(key) { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; } }
 function gravarLS(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
@@ -408,6 +414,10 @@ function mesAnterior(mes) {
   const d = new Date(a, m - 2, 1);
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
+
+function getFila() { try { return JSON.parse(localStorage.getItem(LS_FILA)) || []; } catch (e) { return []; } }
+function salvarFila(fila) { localStorage.setItem(LS_FILA, JSON.stringify(fila)); }
+function novoId() { return Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
 
 /* ===================== HELPERS ===================== */
 const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -494,7 +504,6 @@ function limparForm() {
   document.getElementById('fParceiro').value = '';
   document.getElementById('fNota').value = '';
   document.getElementById('fDevolucao').checked = false;
-  document.getElementById('origemBadge').innerHTML = '';
   editandoId = null;
   document.getElementById('btnCancelarEdicao').classList.add('hidden');
 }
@@ -514,7 +523,7 @@ document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
     parceiro: document.getElementById('fParceiro').value.trim(),
     nota: document.getElementById('fNota').value.trim(),
     devolucao: document.getElementById('fDevolucao').checked,
-    origem: window.__origemAtual || 'manual',
+    origem: 'manual',
     criadoEm: new Date().toISOString()
   };
 
@@ -525,7 +534,6 @@ document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
   salvarLancamentos(mes, arr);
 
   mesLancarAtivo = mes;
-  window.__origemAtual = 'manual';
   limparForm();
   renderLista();
   toast('Lançamento salvo');
@@ -533,11 +541,11 @@ document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
 
 document.getElementById('btnCancelarEdicao').addEventListener('click', limparForm);
 
-/* ===================== IMPORTAÇÃO DE PDF ===================== */
+/* ===================== IMPORTAÇÃO DE PDF EM LOTE ===================== */
 document.getElementById('btnAnexarPdf').addEventListener('click', () => document.getElementById('pdfInput').click());
 document.getElementById('pdfInput').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) processarPDF(file);
+  const files = Array.from(e.target.files || []);
+  if (files.length) processarPDFsEmLote(files);
   e.target.value = '';
 });
 
@@ -643,54 +651,157 @@ function heuristicaExtrair(texto) {
   return { data, peso, pesoOrigem, valor, tipo, parceiro, nota, natureza, devolucao };
 }
 
-async function processarPDF(file) {
+/* Lê várias notas de uma vez e joga cada uma na fila de conferência (não salva direto) */
+async function processarPDFsEmLote(files) {
   const statusEl = document.getElementById('pdfStatus');
-  statusEl.textContent = 'Lendo PDF...';
-  try {
-    const texto = await extrairTextoPDF(file);
-    const dados = heuristicaExtrair(texto);
-
-    if (dados.data) document.getElementById('fData').value = dados.data;
-    if (dados.peso) document.getElementById('fPeso').value = Math.round(dados.peso * 100) / 100;
-    if (dados.valor) document.getElementById('fValor').value = dados.valor;
-    if (dados.tipo) document.getElementById('fTipo').value = dados.tipo;
-    if (dados.parceiro) document.getElementById('fParceiro').value = dados.parceiro;
-    if (dados.nota) document.getElementById('fNota').value = dados.nota;
-    document.getElementById('fDevolucao').checked = !!dados.devolucao;
-
-    window.__origemAtual = 'pdf';
-    document.getElementById('origemBadge').innerHTML = '<span class="badge badge-auto">lido do PDF — confira</span>';
-
-    const achou = [dados.peso && 'peso', dados.valor && 'valor', dados.tipo && 'tipo', dados.parceiro && 'parceiro'].filter(Boolean);
-    let msg = achou.length
-      ? 'Encontrado automaticamente: ' + achou.join(', ') + '. Confira os campos antes de salvar.'
-      : 'Não consegui identificar os dados automaticamente (nota pode ser uma imagem escaneada, ou formato diferente). Preencha manualmente.';
-    if (dados.peso && dados.pesoOrigem === 'transporte') {
-      msg += ' (peso estimado pelo campo "Peso Líquido" do transporte, não pela tabela de produtos — confira com atenção)';
-    }
-    if (dados.devolucao) msg += ' Nota de devolução detectada — marcada para descontar do total.';
-    statusEl.textContent = msg;
-
-    document.getElementById('fData').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  } catch (err) {
-    statusEl.textContent = 'Não consegui ler este PDF automaticamente. Preencha manualmente.';
-    window.__origemAtual = 'pdf';
+  const fila = getFila();
+  let lidas = 0;
+  for (const file of files) {
+    statusEl.textContent = 'Lendo nota ' + (lidas + 1) + ' de ' + files.length + '...';
+    let dados = {};
+    try {
+      const texto = await extrairTextoPDF(file);
+      dados = heuristicaExtrair(texto);
+    } catch (err) { /* nota pode ser imagem escaneada; entra na fila sem dados pra revisão manual */ }
+    fila.push({
+      id: novoId(),
+      arquivo: file.name,
+      data: dados.data || hojeISO(),
+      peso: dados.peso != null ? Math.round(dados.peso * 100) / 100 : null,
+      pesoOrigem: dados.pesoOrigem || null,
+      valor: dados.valor != null ? dados.valor : null,
+      tipo: dados.tipo || null,
+      parceiro: dados.parceiro || '',
+      nota: dados.nota || '',
+      devolucao: !!dados.devolucao
+    });
+    lidas++;
   }
+  salvarFila(fila);
+  renderFila();
+  statusEl.textContent = lidas + (lidas === 1 ? ' nota lida' : ' notas lidas') + '. Confira a fila abaixo e vá dando OK em cada uma.';
+  document.getElementById('filaCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/* Recebe PDF compartilhado do WhatsApp via Web Share Target (guardado pelo service worker) */
+function renderFila() {
+  const fila = getFila();
+  const card = document.getElementById('filaCard');
+  card.classList.toggle('hidden', fila.length === 0);
+  document.getElementById('filaCount').textContent = fila.length ? fila.length + (fila.length === 1 ? ' nota' : ' notas') : '';
+
+  document.getElementById('filaLista').innerHTML = fila.map(it => {
+    const faltaAlgo = !it.peso || !it.tipo;
+    return `
+    <div class="fila-item" data-id="${it.id}" style="border:1.5px solid ${faltaAlgo ? '#f3c1c1' : '#e4edf7'};background:${faltaAlgo ? '#fff8f8' : '#fff'};border-radius:12px;padding:14px;margin-top:12px">
+      <div style="font-weight:800;font-size:13px;color:#1a56a0;margin-bottom:8px;word-break:break-all">📎 ${it.arquivo}</div>
+
+      <div class="grid2">
+        <div><label class="lbl" style="margin-top:0">Data</label><input type="date" class="fila-data" value="${it.data || ''}"></div>
+        <div><label class="lbl" style="margin-top:0">Tipo</label>
+          <select class="fila-tipo">
+            <option value="" ${!it.tipo ? 'selected' : ''} disabled>selecione</option>
+            <option value="compra_bobina" ${it.tipo === 'compra_bobina' ? 'selected' : ''}>Compra de bobina</option>
+            <option value="venda_chapa" ${it.tipo === 'venda_chapa' ? 'selected' : ''}>Venda de chapa</option>
+            <option value="venda_apara" ${it.tipo === 'venda_apara' ? 'selected' : ''}>Venda de aparas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div><label class="lbl">Peso (kg)</label><input type="number" class="fila-peso" inputmode="decimal" value="${it.peso != null ? it.peso : ''}" placeholder="0"></div>
+        <div><label class="lbl">Valor R$</label><input type="number" class="fila-valor" inputmode="decimal" value="${it.valor != null ? it.valor : ''}" placeholder="0"></div>
+      </div>
+
+      <label class="lbl">Fornecedor / Cliente</label>
+      <input type="text" class="fila-parceiro" value="${(it.parceiro || '').replace(/"/g, '&quot;')}" placeholder="Nome">
+
+      <label class="lbl">Nº da nota</label>
+      <input type="text" class="fila-nota" value="${(it.nota || '').replace(/"/g, '&quot;')}" placeholder="Nº NF-e">
+
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13.5px;color:#444;font-weight:700;cursor:pointer">
+        <input type="checkbox" class="fila-devolucao" ${it.devolucao ? 'checked' : ''} style="width:18px;height:18px">
+        ↩️ Devolução (desconta em vez de somar)
+      </label>
+
+      ${faltaAlgo ? '<div class="hint" style="color:#c0392b;font-weight:700;margin-top:8px">⚠️ Não consegui ler tudo sozinho — confira peso e tipo antes de confirmar.</div>' : ''}
+      ${it.pesoOrigem === 'transporte' ? '<div class="hint" style="margin-top:6px">Peso estimado pelo campo "Peso Líquido" do transporte, não pela tabela de produtos.</div>' : ''}
+
+      <div class="grid2" style="margin-top:12px">
+        <button class="btn btn-outline btn-sm fila-descartar" style="margin-top:0">Descartar</button>
+        <button class="btn btn-primary btn-sm fila-confirmar" style="margin-top:0">✔ OK, confirmar</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('.fila-confirmar').forEach(btn => btn.addEventListener('click', (e) => {
+    confirmarItemFila(e.target.closest('.fila-item').dataset.id);
+  }));
+  document.querySelectorAll('.fila-descartar').forEach(btn => btn.addEventListener('click', (e) => {
+    descartarItemFila(e.target.closest('.fila-item').dataset.id);
+  }));
+}
+
+function confirmarItemFila(id) {
+  const el = document.querySelector('.fila-item[data-id="' + id + '"]');
+  if (!el) return;
+  const data = el.querySelector('.fila-data').value;
+  const peso = parseFloat(el.querySelector('.fila-peso').value);
+  const tipo = el.querySelector('.fila-tipo').value;
+  if (!data) { toast('Informe a data'); return; }
+  if (!peso || peso <= 0) { toast('Informe o peso'); return; }
+  if (!tipo) { toast('Selecione o tipo'); return; }
+
+  const entry = {
+    id: novoId(),
+    data,
+    tipo,
+    peso,
+    valor: parseFloat(el.querySelector('.fila-valor').value) || null,
+    parceiro: el.querySelector('.fila-parceiro').value.trim(),
+    nota: el.querySelector('.fila-nota').value.trim(),
+    devolucao: el.querySelector('.fila-devolucao').checked,
+    origem: 'pdf',
+    criadoEm: new Date().toISOString()
+  };
+
+  const mes = chaveMes(data);
+  const arr = getLancamentos(mes);
+  arr.push(entry);
+  salvarLancamentos(mes, arr);
+
+  const fila = getFila().filter(x => x.id !== id);
+  salvarFila(fila);
+
+  mesLancarAtivo = mes;
+  renderFila();
+  renderLista();
+  toast('Lançamento confirmado');
+}
+
+function descartarItemFila(id) {
+  const fila = getFila().filter(x => x.id !== id);
+  salvarFila(fila);
+  renderFila();
+}
+
+/* Recebe PDFs compartilhados do WhatsApp via Web Share Target (guardados pelo service worker).
+   Suporta várias notas compartilhadas juntas de uma vez. */
 async function checarPdfCompartilhado() {
   if (new URLSearchParams(location.search).get('shared') !== '1') return;
   history.replaceState(null, '', location.pathname);
   try {
     const cache = await caches.open('aparas-share-v1');
-    const resp = await cache.match('./shared-pdf');
-    if (resp) {
+    const arquivos = [];
+    let i = 0;
+    while (true) {
+      const resp = await cache.match('./shared-pdf-' + i);
+      if (!resp) break;
       const blob = await resp.blob();
-      await cache.delete('./shared-pdf');
-      const file = new File([blob], 'compartilhado.pdf', { type: 'application/pdf' });
-      processarPDF(file);
+      await cache.delete('./shared-pdf-' + i);
+      arquivos.push(new File([blob], 'compartilhado-' + (i + 1) + '.pdf', { type: 'application/pdf' }));
+      i++;
     }
+    if (arquivos.length) processarPDFsEmLote(arquivos);
   } catch (e) { /* sem cache disponível, ignora */ }
 }
 
@@ -887,6 +998,7 @@ function renderHistorico() {
 /* ===================== INIT ===================== */
 preencherSeletorMeses();
 renderLista();
+renderFila();
 checarPdfCompartilhado();
 
 if ('serviceWorker' in navigator) {

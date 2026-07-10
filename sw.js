@@ -25,18 +25,21 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Recebe o PDF compartilhado direto do WhatsApp (Web Share Target).
-  // Como o site é estático (sem servidor), guardamos o arquivo no Cache Storage
-  // e a página lê ele assim que abre com ?shared=1.
+  // Recebe o(s) PDF(s) compartilhado(s) direto do WhatsApp (Web Share Target).
+  // Suporta compartilhar várias notas de uma vez (seleção múltipla no WhatsApp).
+  // Como o site é estático (sem servidor), guardamos os arquivos no Cache Storage
+  // e a página lê eles assim que abre com ?shared=1.
   if (e.request.method === 'POST' && url.pathname.endsWith('/share-pdf')) {
     e.respondWith((async () => {
       try {
         const formData = await e.request.formData();
-        const file = formData.get('pdf');
-        if (file) {
-          const cache = await caches.open(SHARE_CACHE);
-          await cache.put('./shared-pdf', new Response(file, { headers: { 'Content-Type': file.type || 'application/pdf' } }));
-        }
+        const files = formData.getAll('pdf');
+        const cache = await caches.open(SHARE_CACHE);
+        const antigos = await cache.keys();
+        await Promise.all(antigos.filter(r => r.url.includes('/shared-pdf-')).map(r => cache.delete(r)));
+        await Promise.all(files.map((file, i) =>
+          cache.put('./shared-pdf-' + i, new Response(file, { headers: { 'Content-Type': file.type || 'application/pdf' } }))
+        ));
       } catch (err) { /* segue mesmo se der erro, usuário anexa manualmente */ }
       return Response.redirect('./index.html?shared=1', 303);
     })());
