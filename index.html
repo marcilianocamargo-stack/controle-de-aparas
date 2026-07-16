@@ -98,7 +98,7 @@ body {
 }
 .lbl:first-of-type { margin-top: 0; }
 
-select, input[type=number], input[type=text], input[type=date] {
+select, input[type=number], input[type=text], input[type=date], input[type=password] {
   width: 100%;
   padding: 12px 14px;
   border-radius: 12px;
@@ -365,6 +365,25 @@ textarea {
     <div class="card">
       <div class="card-title">📈 Histórico de fechamentos</div>
       <div id="listaHistorico"></div>
+      <button class="btn btn-outline" id="btnExportarHistoricoXlsx">Exportar histórico completo (.xlsx)</button>
+      <p class="hint">Gera uma planilha com todos os fechamentos e todos os lançamentos de todos os meses — pra compartilhar com quem só precisa consultar, sem acesso ao app.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔗 Compartilhar com outra pessoa</div>
+      <p class="hint">Publica os lançamentos e fechamentos de todos os meses no GitHub. Quem abrir o link do app (sem token nenhum) vê os mesmos dados automaticamente — só pra consulta, não lança nada.</p>
+
+      <button class="btn btn-primary" id="btnPublicarGitHub">📤 Publicar dados no GitHub</button>
+      <div id="statusPublicar" class="hint" style="display:none;font-weight:700;margin-top:8px"></div>
+
+      <label class="lbl">Token do GitHub (uma vez só, fica salvo neste navegador)</label>
+      <input type="password" id="ghToken" placeholder="github_pat_...">
+      <button class="btn btn-outline btn-sm" id="btnSalvarToken">Salvar token</button>
+
+      <p class="hint">Como criar (1x): no GitHub vá em <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</b>. Marque "Only select repositories" → escolha <b>controle-de-aparas</b> → em Permissions ative <b>Contents: Read and write</b>. Cole o token acima. Ele fica salvo só neste navegador. <a href="#" id="linkRemoverToken">Remover token salvo</a>.</p>
+
+      <button class="btn btn-ghost" id="btnBaixarJson">Baixar dados-aparas.json (backup manual)</button>
+      <p class="hint">Alternativa sem token: baixa o arquivo pra subir manualmente na raiz do repositório no GitHub.</p>
     </div>
   </div>
 
@@ -961,10 +980,153 @@ function renderHistorico() {
   }).join('');
 }
 
+document.getElementById('btnExportarHistoricoXlsx').addEventListener('click', () => {
+  const fechamentos = lerLS(LS_FECH);
+  const lancamentos = lerLS(LS_LANC);
+  const meses = Array.from(new Set([...Object.keys(fechamentos), ...Object.keys(lancamentos)])).sort();
+
+  if (!meses.length) { toast('Nada pra exportar ainda'); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  const historico = [['Mês', 'Estoque inicial (kg)', 'Entrou (kg)', 'Saiu chapa (kg)', 'Saiu papel ondulado (kg)', 'Estoque teórico (kg)', 'Vendido apara (kg)', 'Estoque final informado (kg)', 'Perda (kg)', '% Perda', 'Meta (%)']];
+  meses.forEach(mes => {
+    const b = calcularBalanco(mes);
+    historico.push([nomeMes(mes), b.estoqueInicial, b.entrada, b.saidaChapa, b.saidaPapelOndulado, b.teorico, b.saidaApara, b.estoqueFinal, b.perda, b.percPerda != null ? b.percPerda.toFixed(2) + '%' : '', b.meta]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(historico), 'Histórico');
+
+  const detalhe = [['Mês', 'Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Fornecedor/Cliente', 'Nº Nota', 'Arquivo', 'Origem']];
+  meses.forEach(mes => {
+    getLancamentos(mes).slice().sort((a, b2) => a.data.localeCompare(b2.data)).forEach(x => {
+      detalhe.push([nomeMes(mes), fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.parceiro || '', x.nota || '', x.arquivo || '', x.origem]);
+    });
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detalhe), 'Lançamentos');
+
+  XLSX.writeFile(wb, 'Controle_Aparas_Historico_Completo.xlsx');
+  toast('Histórico completo exportado');
+});
+
+/* ===================== COMPARTILHAR (publicar no GitHub) =====================
+   Mesmo esquema já usado no app da onduladeira: o dono publica um JSON com todos
+   os lançamentos/fechamentos direto no repositório via token pessoal do GitHub;
+   quem só quer consultar abre o link normal e o app busca esse JSON sozinho,
+   sem precisar de token nem login. */
+const GH_OWNER = 'marcilianocamargo-stack';
+const GH_REPO = 'controle-de-aparas';
+const GH_PATH = 'dados-aparas.json';
+const GH_TOKEN_KEY = 'aparasGhToken';
+
+function payloadPublicacao() {
+  return { geradoEm: new Date().toISOString(), lancamentos: lerLS(LS_LANC), fechamentos: lerLS(LS_FECH) };
+}
+
+function utf8ParaBase64(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))));
+}
+
+function getTokenSalvo() { return localStorage.getItem(GH_TOKEN_KEY) || ''; }
+function setTokenSalvo(t) { if (t) localStorage.setItem(GH_TOKEN_KEY, t); else localStorage.removeItem(GH_TOKEN_KEY); }
+function tokenAtual() {
+  const doCampo = document.getElementById('ghToken').value.trim();
+  if (doCampo) { setTokenSalvo(doCampo); return doCampo; }
+  return getTokenSalvo();
+}
+document.getElementById('ghToken').value = getTokenSalvo();
+
+document.getElementById('btnSalvarToken').addEventListener('click', () => {
+  setTokenSalvo(document.getElementById('ghToken').value.trim());
+  toast(getTokenSalvo() ? 'Token salvo neste navegador' : 'Token removido');
+});
+document.getElementById('linkRemoverToken').addEventListener('click', (e) => {
+  e.preventDefault();
+  setTokenSalvo('');
+  document.getElementById('ghToken').value = '';
+  toast('Token removido deste navegador');
+});
+
+async function publicarNoGitHub() {
+  const status = document.getElementById('statusPublicar');
+  status.style.display = 'block';
+  status.style.color = '#556';
+  const token = tokenAtual();
+  if (!token) { status.style.color = '#c0392b'; status.textContent = '⚠ Cole um token do GitHub no campo abaixo antes de publicar.'; return; }
+
+  status.textContent = '⏳ Publicando no GitHub...';
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
+  const headers = { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github+json' };
+
+  try {
+    let sha;
+    const getResp = await fetch(apiUrl, { headers });
+    if (getResp.ok) sha = (await getResp.json()).sha;
+    else if (getResp.status !== 404) throw new Error('não foi possível consultar o arquivo atual (HTTP ' + getResp.status + ')');
+
+    const conteudo = JSON.stringify(payloadPublicacao(), null, 2);
+    const putResp = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: Object.assign({}, headers, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ message: 'Atualiza dados de aparas via app (' + new Date().toLocaleString('pt-BR') + ')', content: utf8ParaBase64(conteudo), sha })
+    });
+    if (!putResp.ok) { const erro = await putResp.json().catch(() => ({})); throw new Error(erro.message || ('HTTP ' + putResp.status)); }
+
+    status.style.color = '#1e8449';
+    status.textContent = '✓ Publicado — quem abrir o link já vê os dados atualizados.';
+  } catch (err) {
+    status.style.color = '#c0392b';
+    status.textContent = '⚠ Falha ao publicar: ' + err.message;
+  }
+}
+document.getElementById('btnPublicarGitHub').addEventListener('click', publicarNoGitHub);
+
+document.getElementById('btnBaixarJson').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(payloadPublicacao(), null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = GH_PATH;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('JSON gerado — suba manualmente na raiz do repositório');
+});
+
+/* Busca o JSON publicado e mescla com o que já existe neste navegador, sem apagar nada
+   local: lançamentos entram por união de id, fechamentos só são sobrescritos se o
+   publicado for mais recente (fechadoEm maior). Assim quem só consulta recebe tudo,
+   e quem lança dados no próprio aparelho nunca perde o que ainda não publicou. */
+async function carregarDadosPublicados() {
+  try {
+    const r = await fetch('./' + GH_PATH + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const publicado = await r.json();
+
+    const lancLocal = lerLS(LS_LANC);
+    Object.entries(publicado.lancamentos || {}).forEach(([mes, itensPub]) => {
+      const itensLocal = lancLocal[mes] || [];
+      const idsLocais = new Set(itensLocal.map(x => x.id));
+      const novos = (itensPub || []).filter(x => !idsLocais.has(x.id));
+      if (novos.length) lancLocal[mes] = itensLocal.concat(novos);
+    });
+    gravarLS(LS_LANC, lancLocal);
+
+    const fechLocal = lerLS(LS_FECH);
+    Object.entries(publicado.fechamentos || {}).forEach(([mes, fPub]) => {
+      const fLoc = fechLocal[mes];
+      if (!fLoc || (fPub && fPub.fechadoEm && (!fLoc.fechadoEm || fPub.fechadoEm > fLoc.fechadoEm))) fechLocal[mes] = fPub;
+    });
+    gravarLS(LS_FECH, fechLocal);
+  } catch (e) { /* sem rede ou ainda não publicado nada — segue só com o que já está local */ }
+}
+
 /* ===================== INIT ===================== */
-preencherSeletorMeses();
-renderLista();
-renderFila();
+async function iniciar() {
+  await carregarDadosPublicados();
+  preencherSeletorMeses();
+  renderLista();
+  renderFila();
+}
+iniciar();
 checarArquivosCompartilhados();
 
 if ('serviceWorker' in navigator) {
