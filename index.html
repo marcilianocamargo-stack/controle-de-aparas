@@ -340,9 +340,9 @@ textarea {
       <div class="balanco-row sub"><span>+ Entrou (compra de bobina)</span><span class="v" id="vEntrada">0</span></div>
       <div class="balanco-row total"><span>Estoque inicial + entrada</span><span class="v" id="vSubtotal">0</span></div>
       <div class="balanco-row sub"><span>− Saiu em chapa (produção)</span><span class="v" id="vSaidaChapa">0</span></div>
-      <div class="balanco-row sub"><span>− Saiu de aparas</span><span class="v" id="vSaidaApara">0</span></div>
       <div class="balanco-row sub"><span>− Saiu em papel ondulado</span><span class="v" id="vSaidaPapelOndulado">0</span></div>
       <div class="balanco-row total"><span>Estoque teórico final</span><span class="v" id="vTeorico">0</span></div>
+      <div class="balanco-row sub"><span>Vendido como apara <span class="hint" style="display:inline">(entra como perda)</span></span><span class="v" id="vSaidaApara">0</span></div>
 
       <label class="lbl">Estoque final informado (kg) <span class="hint" style="display:inline">— contagem física no fechamento</span></label>
       <input type="number" id="estoqueFinal" inputmode="decimal" placeholder="0">
@@ -795,7 +795,9 @@ function calcularBalanco(mes) {
   const estoqueInicial = fech.estoqueInicial != null ? fech.estoqueInicial : (estoqueInicialAuto ? fechAnterior.estoqueFinal : 0);
 
   const subtotal = estoqueInicial + entrada;
-  const teorico = subtotal - saidaChapa - saidaApara - saidaPapelOndulado;
+  // Apara não é descontada aqui: é resíduo de produção (não virou chapa/ondulado),
+  // então o peso vendido como apara deve aparecer como perda, mesmo gerando receita.
+  const teorico = subtotal - saidaChapa - saidaPapelOndulado;
   const estoqueFinal = fech.estoqueFinal != null ? fech.estoqueFinal : null;
 
   const perda = estoqueFinal != null ? teorico - estoqueFinal : null;
@@ -877,9 +879,9 @@ document.getElementById('btnExportarXlsx').addEventListener('click', () => {
     ['+ Entrou (compra de bobina)', b.entrada],
     ['Estoque inicial + entrada', b.subtotal],
     ['- Saiu em chapa (produção)', b.saidaChapa],
-    ['- Saiu de aparas', b.saidaApara],
     ['- Saiu em papel ondulado', b.saidaPapelOndulado],
     ['Estoque teórico final', b.teorico],
+    ['Vendido como apara (entra como perda) (kg)', b.saidaApara],
     ['Estoque final informado', b.estoqueFinal],
     ['Perda (kg)', b.perda],
     ['% Perda', b.percPerda != null ? b.percPerda.toFixed(2) + '%' : ''],
@@ -914,12 +916,12 @@ document.getElementById('btnCopiarResumo').addEventListener('click', () => {
     'Menos (saiu em chapa no mês)',
     fmt(b.saidaChapa) + ' 👍',
     '',
-    'Menos (saiu de aparas no mês)',
-    fmt(b.saidaApara) + ' 👍',
-    '',
     ...(b.saidaPapelOndulado ? ['Menos (saiu em papel ondulado no mês)', fmt(b.saidaPapelOndulado) + ' 👍', ''] : []),
     dataFim + ' sobrou em Estoque',
     (b.estoqueFinal != null ? fmt(b.estoqueFinal) : '?') + ' 👍',
+    '',
+    'Vendido como apara no mês (entra na perda)',
+    fmt(b.saidaApara) + ' 👍',
     '',
     'Perda: ' + (b.perda != null ? fmt(b.perda) + ' kg' : '?') + (b.percPerda != null ? ' (' + b.percPerda.toFixed(1) + '%)' : ''),
     b.percPerda != null ? (b.percPerda <= b.meta ? '✅ dentro da meta de ' + b.meta + '%' : '⚠️ acima da meta de ' + b.meta + '%') : ''
