@@ -270,6 +270,12 @@ textarea {
       <input type="file" id="ocrInput" accept=".json,.txt,application/json,text/plain" multiple class="hidden">
       <button class="btn btn-primary" id="btnImportarOcr">Importar arquivo(s) JSON/TXT do NotebookLM</button>
       <p class="hint">Extraia as notas no NotebookLM (pergunte pelo peso líquido, cliente/fornecedor, número da nota, data e tipo) e salve a resposta como .json ou .txt. Pode subir vários arquivos de uma vez — cada nota extraída entra na fila de conferência abaixo pra você dar OK.</p>
+
+      <label class="lbl">…ou cole o JSON aqui</label>
+      <textarea id="ocrColar" placeholder='Cole aqui o JSON do NotebookLM. Ex.:&#10;[&#10;  { "cliente_fornecedor": "Fulano", "numero_nota": "123", "data": "21/07/2026", "tipo": "compra de bobina", "peso_liquido_kg": "12500" }&#10;]'></textarea>
+      <button class="btn btn-primary" id="btnColarOcr">Processar JSON colado</button>
+      <p class="hint">Cola o texto que o NotebookLM devolveu (aceita um objeto só ou uma lista de várias notas, mesmo com as cercas ```json em volta). Cada nota entra na fila de conferência abaixo.</p>
+
       <div id="pdfStatus" class="hint"></div>
     </div>
 
@@ -598,6 +604,35 @@ document.getElementById('ocrInput').addEventListener('change', (e) => {
   const files = Array.from(e.target.files || []);
   if (files.length) processarArquivosOCR(files);
   e.target.value = '';
+});
+
+/* Processa o JSON colado direto no textarea (sem precisar salvar arquivo) —
+   mesma lógica dos arquivos: cada nota extraída entra na fila de conferência. */
+document.getElementById('btnColarOcr').addEventListener('click', () => {
+  const campo = document.getElementById('ocrColar');
+  const texto = campo.value.trim();
+  const statusEl = document.getElementById('pdfStatus');
+  if (!texto) { toast('Cole o JSON no campo primeiro'); return; }
+
+  const parsed = parseJSONTolerante(texto);
+  if (parsed == null) { statusEl.style.color = '#c0392b'; statusEl.textContent = '⚠ Não deu pra entender o texto como JSON. Confira se colou a resposta completa.'; toast('JSON inválido'); return; }
+  statusEl.style.color = '';
+
+  const fila = getFila();
+  let notas = 0;
+  if (Array.isArray(parsed)) {
+    parsed.forEach(item => { empilharItemOCR(fila, 'colado', mapearItemOCR(item)); notas++; });
+  } else if (typeof parsed === 'object') {
+    empilharItemOCR(fila, 'colado', mapearItemOCR(parsed));
+    notas++;
+  }
+  if (!notas) { toast('Nenhuma nota encontrada no JSON'); return; }
+
+  salvarFila(fila);
+  renderFila();
+  campo.value = '';
+  statusEl.textContent = notas + (notas === 1 ? ' nota lida' : ' notas lidas') + ' do texto colado. Confira a fila abaixo e vá dando OK em cada uma.';
+  document.getElementById('filaCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 function lerArquivoComoTexto(file) {
