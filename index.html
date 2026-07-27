@@ -257,77 +257,92 @@ textarea {
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="lancar">Lançar</button>
-    <button class="tab-btn" data-tab="fechamento">Fechamento</button>
+    <button class="tab-btn active" data-tab="fechamento">Fechamento</button>
+    <button class="tab-btn" data-tab="lancar">Lançar</button>
     <button class="tab-btn" data-tab="historico">Histórico</button>
   </div>
 
   <!-- ===================== TAB LANÇAR ===================== -->
-  <div id="tab-lancar" class="tab-content">
-
-    <div class="card">
-      <div class="card-title">🤖 Importar OCR (NotebookLM)</div>
-      <input type="file" id="ocrInput" accept=".json,.txt,application/json,text/plain" multiple class="hidden">
-      <button class="btn btn-primary" id="btnImportarOcr">Importar arquivo(s) JSON/TXT do NotebookLM</button>
-      <p class="hint">Extraia as notas no NotebookLM (pergunte pelo peso líquido, cliente/fornecedor, número da nota, data e tipo) e salve a resposta como .json ou .txt. Pode subir vários arquivos de uma vez — cada nota extraída entra na fila de conferência abaixo pra você dar OK.</p>
-
-      <label class="lbl">…ou cole o JSON aqui</label>
-      <textarea id="ocrColar" placeholder='Cole aqui o JSON do NotebookLM. Ex.:&#10;[&#10;  { "cliente_fornecedor": "Fulano", "numero_nota": "123", "data": "21/07/2026", "tipo": "compra de bobina", "peso_liquido_kg": "12500" }&#10;]'></textarea>
-      <button class="btn btn-primary" id="btnColarOcr">Processar JSON colado</button>
-      <p class="hint">Cola o texto que o NotebookLM devolveu (aceita um objeto só ou uma lista de várias notas, mesmo com as cercas ```json em volta). Cada nota entra na fila de conferência abaixo.</p>
-
-      <div id="pdfStatus" class="hint"></div>
-    </div>
-
-    <div class="card hidden" id="filaCard">
-      <div class="card-title" style="justify-content:space-between">
-        <span>🗂️ Fila de conferência <span id="filaCount" class="badge badge-auto"></span></span>
-        <button class="btn btn-outline btn-sm" id="btnLimparFila" style="margin-top:0;width:auto;padding:8px 14px">Limpar fila</button>
-      </div>
-      <div id="filaLista"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">✍️ Lançamento manual</div>
-
-      <label class="lbl">Data</label>
-      <input type="date" id="fData">
-
-      <label class="lbl">Tipo</label>
-      <select id="fTipo">
-        <option value="compra_bobina">Compra de bobina (entrada)</option>
-        <option value="venda_chapa">Venda de chapa / produção (saída)</option>
-        <option value="venda_apara">Venda de aparas (saída)</option>
-        <option value="venda_papel_ondulado">Papel Ondulado (saída)</option>
-      </select>
-
-      <label class="lbl">Peso (kg)</label>
-      <input type="number" id="fPeso" inputmode="decimal" placeholder="0">
-
-      <label class="lbl">Fornecedor / Cliente</label>
-      <input type="text" id="fParceiro" placeholder="Nome">
-
-      <label class="lbl">Nº da nota (opcional)</label>
-      <input type="text" id="fNota" placeholder="Nº NF-e">
-
-      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:#444;font-weight:700;cursor:pointer">
-        <input type="checkbox" id="fDevolucao" style="width:20px;height:20px">
-        ↩️ Devolução (desconta em vez de somar)
-      </label>
-
-      <button class="btn btn-primary" id="btnSalvarLancamento">Salvar lançamento</button>
-      <button class="btn btn-ghost hidden" id="btnCancelarEdicao">Cancelar</button>
-    </div>
+  <div id="tab-lancar" class="tab-content hidden">
 
     <div class="card">
       <div class="card-title">📋 Lançamentos de <span id="mesLancarLabel"></span></div>
       <div id="listaLancamentos"></div>
     </div>
 
+    <div class="card" id="cardSupervisorLock">
+      <div class="card-title">🔒 Área do supervisor</div>
+      <p class="hint">Lançar (manual ou importar OCR) exige a senha do supervisor.</p>
+      <label class="lbl">Senha</label>
+      <input type="password" id="supervisorSenha" placeholder="Senha">
+      <button class="btn btn-primary" id="btnEntrarSupervisor">Entrar</button>
+      <div id="supervisorErro" class="hint" style="display:none;color:#c0392b">Senha incorreta.</div>
+    </div>
+
+    <div id="areaSupervisor" class="hidden">
+
+      <div class="card">
+        <div class="card-title">🤖 Importar OCR (NotebookLM)</div>
+        <input type="file" id="ocrInput" accept=".json,.txt,application/json,text/plain" multiple class="hidden">
+        <button class="btn btn-primary" id="btnImportarOcr">Importar arquivo(s) JSON/TXT do NotebookLM</button>
+        <p class="hint">Extraia as notas no NotebookLM (pergunte pelo peso líquido, cliente/fornecedor, número da nota, data e tipo) e salve a resposta como .json ou .txt. Pode subir vários arquivos de uma vez — cada nota extraída entra na fila de conferência abaixo pra você dar OK.</p>
+
+        <label class="lbl">…ou cole o JSON aqui</label>
+        <textarea id="ocrColar" placeholder='Cole aqui o JSON do NotebookLM. Ex.:&#10;[&#10;  { "cliente_fornecedor": "Fulano", "numero_nota": "123", "data": "21/07/2026", "tipo": "compra de bobina", "peso_liquido_kg": "12500" }&#10;]'></textarea>
+        <button class="btn btn-primary" id="btnColarOcr">Processar JSON colado</button>
+        <p class="hint">Cola o texto que o NotebookLM devolveu (aceita um objeto só ou uma lista de várias notas, mesmo com as cercas ```json em volta). Cada nota entra na fila de conferência abaixo.</p>
+
+        <div id="pdfStatus" class="hint"></div>
+      </div>
+
+      <div class="card hidden" id="filaCard">
+        <div class="card-title" style="justify-content:space-between">
+          <span>🗂️ Fila de conferência <span id="filaCount" class="badge badge-auto"></span></span>
+          <button class="btn btn-outline btn-sm" id="btnLimparFila" style="margin-top:0;width:auto;padding:8px 14px">Limpar fila</button>
+        </div>
+        <div id="filaLista"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">✍️ Lançamento manual</div>
+
+        <label class="lbl">Data</label>
+        <input type="date" id="fData">
+
+        <label class="lbl">Tipo</label>
+        <select id="fTipo">
+          <option value="compra_bobina">Compra de bobina (entrada)</option>
+          <option value="venda_chapa">Venda de chapa / produção (saída)</option>
+          <option value="venda_apara">Venda de aparas (saída)</option>
+          <option value="venda_papel_ondulado">Papel Ondulado (saída)</option>
+        </select>
+
+        <label class="lbl">Peso (kg)</label>
+        <input type="number" id="fPeso" inputmode="decimal" placeholder="0">
+
+        <label class="lbl">Fornecedor / Cliente</label>
+        <input type="text" id="fParceiro" placeholder="Nome">
+
+        <label class="lbl">Nº da nota (opcional)</label>
+        <input type="text" id="fNota" placeholder="Nº NF-e">
+
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:#444;font-weight:700;cursor:pointer">
+          <input type="checkbox" id="fDevolucao" style="width:20px;height:20px">
+          ↩️ Devolução (desconta em vez de somar)
+        </label>
+
+        <button class="btn btn-primary" id="btnSalvarLancamento">Salvar lançamento</button>
+        <button class="btn btn-ghost hidden" id="btnCancelarEdicao">Cancelar</button>
+      </div>
+
+      <button class="btn btn-ghost" id="btnSairSupervisor">🔒 Sair da área do supervisor</button>
+
+    </div>
+
   </div>
 
   <!-- ===================== TAB FECHAMENTO ===================== -->
-  <div id="tab-fechamento" class="tab-content hidden">
+  <div id="tab-fechamento" class="tab-content">
 
     <div class="card">
       <div class="card-title">📅 Mês do fechamento</div>
@@ -1162,12 +1177,34 @@ async function carregarDadosPublicados() {
   } catch (e) { /* sem rede ou ainda não publicado nada — segue só com o que já está local */ }
 }
 
+/* ===================== ÁREA DO SUPERVISOR ===================== */
+const SENHA_SUPERVISOR = '0907';
+document.getElementById('btnEntrarSupervisor').addEventListener('click', () => {
+  const campo = document.getElementById('supervisorSenha');
+  if (campo.value === SENHA_SUPERVISOR) {
+    document.getElementById('cardSupervisorLock').classList.add('hidden');
+    document.getElementById('areaSupervisor').classList.remove('hidden');
+    document.getElementById('supervisorErro').style.display = 'none';
+    campo.value = '';
+  } else {
+    document.getElementById('supervisorErro').style.display = 'block';
+  }
+});
+document.getElementById('supervisorSenha').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btnEntrarSupervisor').click();
+});
+document.getElementById('btnSairSupervisor').addEventListener('click', () => {
+  document.getElementById('areaSupervisor').classList.add('hidden');
+  document.getElementById('cardSupervisorLock').classList.remove('hidden');
+});
+
 /* ===================== INIT ===================== */
 async function iniciar() {
   await carregarDadosPublicados();
   preencherSeletorMeses();
   renderLista();
   renderFila();
+  atualizarFechamento();
 }
 iniciar();
 checarArquivosCompartilhados();
