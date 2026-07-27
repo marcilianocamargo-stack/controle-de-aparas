@@ -1126,15 +1126,23 @@ document.getElementById('btnBaixarJson').addEventListener('click', () => {
   toast('JSON gerado — suba manualmente na raiz do repositório');
 });
 
-/* Busca o JSON publicado e mescla com o que já existe neste navegador, sem apagar nada
-   local: lançamentos entram por união de id, fechamentos só são sobrescritos se o
-   publicado for mais recente (fechadoEm maior). Assim quem só consulta recebe tudo,
-   e quem lança dados no próprio aparelho nunca perde o que ainda não publicou. */
+/* Só o aparelho que tem o token de publicação salvo é quem realmente faz o controle
+   (o "principal"); os demais são apenas consulta. Nos demais, os dados locais são
+   substituídos pelos publicados a cada abertura — eles só espelham o que veio do
+   principal, nunca misturam lançamentos feitos por engano no próprio aparelho.
+   Já no principal, mescla sem apagar nada que ainda não foi publicado (união por id
+   nos lançamentos; fechamento só é trocado se o publicado for mais recente). */
 async function carregarDadosPublicados() {
   try {
     const r = await fetch('./' + GH_PATH + '?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return;
     const publicado = await r.json();
+
+    if (!getTokenSalvo()) {
+      gravarLS(LS_LANC, publicado.lancamentos || {});
+      gravarLS(LS_FECH, publicado.fechamentos || {});
+      return;
+    }
 
     const lancLocal = lerLS(LS_LANC);
     Object.entries(publicado.lancamentos || {}).forEach(([mes, itensPub]) => {
