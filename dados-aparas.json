@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-07-16T14:25:24.012Z",
+  "geradoEm": "2026-07-27T13:35:46.451Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -375,6 +375,41 @@
         "criadoEm": "2026-07-16T00:31:59.627Z"
       },
       {
+        "id": "1784660340438_ebj23j",
+        "data": "2026-07-15",
+        "tipo": "venda_chapa",
+        "peso": 24680,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1443",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-21T18:59:00.438Z"
+      },
+      {
+        "id": "1784660376208_aoyo8d",
+        "data": "2026-07-16",
+        "tipo": "venda_apara",
+        "peso": 7760,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1444",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-21T18:59:36.208Z"
+      },
+      {
+        "id": "1785156723705_dksi9",
+        "data": "2026-07-27",
+        "tipo": "venda_papel_ondulado",
+        "peso": 2085,
+        "parceiro": "roberto",
+        "nota": "0000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-27T12:52:03.705Z"
+      },
+      {
         "id": "1784206658898_bqcro",
         "data": "2026-07-16",
         "tipo": "venda_chapa",
@@ -400,10 +435,10 @@
   },
   "fechamentos": {
     "2026-07": {
-      "estoqueInicial": 72000,
+      "estoqueInicial": 72854,
       "estoqueFinal": 89740,
       "meta": 8,
-      "fechadoEm": "2026-07-16T14:19:05.332Z"
+      "fechadoEm": "2026-07-27T13:34:50.873Z"
     }
   }
 }
