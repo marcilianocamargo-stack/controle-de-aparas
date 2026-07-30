@@ -378,6 +378,8 @@ textarea {
       <button class="btn btn-outline" id="btnExportarXlsx">Exportar Excel (.xlsx)</button>
       <button class="btn btn-ghost" id="btnCopiarResumo">Copiar resumo p/ WhatsApp</button>
       <textarea id="resumoTexto" class="hidden" readonly></textarea>
+      <button class="btn btn-danger" id="btnResetarMes">🗑️ Limpar mês e começar de novo</button>
+      <p class="hint">Apaga todos os lançamentos e o fechamento do mês selecionado acima, pra começar o mês do zero. Não afeta os outros meses. Ação irreversível — pede a senha do supervisor.</p>
     </div>
 
   </div>
@@ -441,6 +443,11 @@ function getFechamento(mes) {
 function salvarFechamento(mes, dados) {
   const all = lerLS(LS_FECH);
   all[mes] = Object.assign({}, all[mes], dados);
+  gravarLS(LS_FECH, all);
+}
+function apagarFechamento(mes) {
+  const all = lerLS(LS_FECH);
+  delete all[mes];
   gravarLS(LS_FECH, all);
 }
 function mesAnterior(mes) {
@@ -1009,6 +1016,33 @@ document.getElementById('btnCopiarResumo').addEventListener('click', () => {
   } else {
     area.classList.remove('hidden');
     toast('Selecione e copie o texto abaixo');
+  }
+});
+
+document.getElementById('btnResetarMes').addEventListener('click', async () => {
+  const mes = document.getElementById('mesFechamento').value;
+  const qtdLanc = getLancamentos(mes).length;
+  const temFechamento = !!getFechamento(mes);
+  if (!qtdLanc && !temFechamento) { toast('Não há nada lançado neste mês'); return; }
+
+  const senha = prompt('Ação irreversível. Digite a senha do supervisor para confirmar a limpeza de ' + nomeMes(mes) + ':');
+  if (senha === null) return;
+  if (senha !== SENHA_SUPERVISOR) { toast('Senha incorreta'); return; }
+
+  if (!confirm('Isso vai apagar todos os ' + qtdLanc + ' lançamento(s) e o fechamento de ' + nomeMes(mes) + '. Não pode ser desfeito. Confirma?')) return;
+
+  salvarLancamentos(mes, []);
+  apagarFechamento(mes);
+
+  if (mesLancarAtivo === mes) renderLista();
+  atualizarFechamento();
+  renderHistorico();
+  toast('Mês ' + nomeMes(mes) + ' limpo');
+
+  if (getTokenSalvo()) {
+    await publicarNoGitHub();
+  } else {
+    toast('Limpo aqui — sem token salvo, publique manualmente se quiser atualizar o link compartilhado');
   }
 });
 
