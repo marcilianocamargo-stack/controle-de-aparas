@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-07-31T14:37:32.562Z",
+  "geradoEm": "2026-07-31T16:52:40.305Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -720,15 +720,158 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-07-31T14:22:48.036Z"
+      },
+      {
+        "id": "1785514629081_5kmjv8",
+        "data": "2026-07-16",
+        "tipo": "venda_apara",
+        "peso": 7760,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1444",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:17:09.081Z"
+      },
+      {
+        "id": "1785514665262_sclaub",
+        "data": "2026-07-23",
+        "tipo": "venda_apara",
+        "peso": 19580,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1448",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:17:45.262Z"
+      },
+      {
+        "id": "1785514679031_m00n1s",
+        "data": "2026-07-28",
+        "tipo": "venda_apara",
+        "peso": 7340,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1451",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:17:59.031Z"
+      },
+      {
+        "id": "1785514695798_pmjfn6",
+        "data": "2026-07-31",
+        "tipo": "venda_apara",
+        "peso": 12400,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1453",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:18:15.798Z"
+      },
+      {
+        "id": "1785515773207_ph1s9e",
+        "data": "2026-07-01",
+        "tipo": "compra_bobina",
+        "peso": 28240,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27069",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:36:13.207Z"
+      },
+      {
+        "id": "1785515817319_0ow26c",
+        "data": "2026-07-20",
+        "tipo": "compra_bobina",
+        "peso": 34030,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27183",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:36:57.319Z"
+      },
+      {
+        "id": "1785515859444_f7s70h",
+        "data": "2026-07-06",
+        "tipo": "compra_bobina",
+        "peso": 29040,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27089",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:37:39.444Z"
+      },
+      {
+        "id": "1785515873203_dggs5w",
+        "data": "2026-07-06",
+        "tipo": "compra_bobina",
+        "peso": 28500,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27090",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:37:53.203Z"
+      },
+      {
+        "id": "1785515901307_13pkmt",
+        "data": "2026-07-16",
+        "tipo": "compra_bobina",
+        "peso": 33440,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27151",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:38:21.307Z"
+      },
+      {
+        "id": "1785515912443_y9brdd",
+        "data": "2026-07-24",
+        "tipo": "compra_bobina",
+        "peso": 33110,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27218",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:38:32.443Z"
+      },
+      {
+        "id": "1785515939427_zgiwvm",
+        "data": "2026-07-29",
+        "tipo": "compra_bobina",
+        "peso": 34670,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27248",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-07-31T16:38:59.427Z"
+      },
+      {
+        "id": "1785516750547_37sh9",
+        "data": "2026-07-31",
+        "tipo": "compra_bobina",
+        "peso": 28050,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27122",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T16:52:30.547Z"
       }
     ]
   },
   "fechamentos": {
     "2026-07": {
       "estoqueInicial": 72854,
-      "estoqueFinal": null,
+      "estoqueFinal": 45000,
       "meta": 8,
-      "fechadoEm": "2026-07-31T14:33:40.312Z"
+      "fechadoEm": "2026-07-31T16:19:15.427Z"
     }
   }
 }
