@@ -417,7 +417,7 @@ textarea {
 
 <div id="toast" class="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
 /* ===================== STORAGE ===================== */
 const LS_LANC = 'aparas_lancamentos_v1';
@@ -941,150 +941,311 @@ document.getElementById('btnSalvarFechamento').addEventListener('click', () => {
   toast('Fechamento salvo');
 });
 
-/* ===================== DASHBOARDS (planilha exportada) =====================
-   A biblioteca XLSX gratuita não desenha gráfico nativo do Excel, então o
-   "dashboard" é montado como tabela + barra de texto (caracteres █) cujo
-   tamanho é proporcional ao valor — dá pra comparar visualmente sem precisar
-   de gráfico de verdade. */
-function barraTexto(valor, max, largura) {
-  largura = largura || 24;
-  if (!max || max <= 0 || !valor) return '';
-  const n = Math.max(0, Math.round((Math.abs(valor) / max) * largura));
-  return '█'.repeat(n);
+/* ===================== ESTILO DAS PLANILHAS EXPORTADAS =====================
+   Paleta da empresa: azul (Prime) estrutura cabeçalhos/títulos; verde
+   (Piquiri, fornecedora da bobina) destaca a entrada de matéria-prima e
+   totais em foco. Usa ExcelJS em vez do SheetJS gratuito porque só o
+   ExcelJS grava estilo de verdade no .xlsx (cor, fonte, barra de dados
+   nativa do Excel) — a build gratuita do SheetJS aceita a opção cellStyles
+   mas descarta a formatação ao salvar. */
+const COR = {
+  azul: 'FF1A56A0',
+  azulEscuro: 'FF133F78',
+  azulClaro: 'FFEAF1FB',
+  verde: 'FF1E8449',
+  verdeClaro: 'FFE5F5EA',
+  texto: 'FF2B3A4A',
+  textoSuave: 'FF6B7A8D',
+  borda: 'FFD9E3EF',
+  branco: 'FFFFFFFF',
+  alerta: 'FFC0392B'
+};
+const FMT_KG = '#,##0" kg"';
+
+/* Verde = Piquiri (fornece a bobina) · Azul = Prime (vende o que sai). */
+function corDoTipo(tipo) { return tipo === 'compra_bobina' ? COR.verde : COR.azul; }
+
+function novaAba(wb, nome, opts) {
+  opts = opts || {};
+  return wb.addWorksheet(nome, {
+    views: [{ state: opts.freezeHeader ? 'frozen' : 'normal', ySplit: opts.freezeHeader ? 1 : 0, showGridLines: false }],
+    properties: { tabColor: { argb: opts.corAba || COR.azul } }
+  });
 }
 
-function montarAbaDashboardTipo(lanc, tipo, titulo) {
+function bordaFina() {
+  const c = { style: 'thin', color: { argb: COR.borda } };
+  return { top: c, left: c, bottom: c, right: c };
+}
+
+function estilizarCabecalho(ws, numLinha, corFundo) {
+  const row = ws.getRow(numLinha);
+  row.eachCell({ includeEmpty: false }, cell => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corFundo || COR.azul } };
+    cell.font = { bold: true, color: { argb: COR.branco }, size: 11 };
+    cell.alignment = { vertical: 'middle' };
+    cell.border = bordaFina();
+  });
+  row.height = 22;
+}
+
+function larguraAuto(ws, cabecalho, linhas) {
+  cabecalho.forEach((h, i) => {
+    let maxLen = String(h).length;
+    linhas.forEach(l => { const v = l[i]; if (v != null && v !== '') maxLen = Math.max(maxLen, String(v).length); });
+    ws.getColumn(i + 1).width = Math.min(Math.max(maxLen + 2, 10), 44);
+  });
+}
+
+/* Tabela "de escritório": cabeçalho azul, zebra leve, borda fina, autofiltro
+   e cabeçalho fixo — pensada pra abrir, ordenar e filtrar sem enfeite. */
+function construirTabela(ws, cabecalho, linhas, opts) {
+  opts = opts || {};
+  const headerRow = ws.addRow(cabecalho);
+  estilizarCabecalho(ws, headerRow.number, opts.corCabecalho);
+
+  linhas.forEach((linha, i) => {
+    const row = ws.addRow(linha);
+    const zebra = i % 2 === 1;
+    row.eachCell({ includeEmpty: false }, cell => {
+      cell.border = bordaFina();
+      if (!cell.font) cell.font = { color: { argb: COR.texto }, size: 10.5 };
+      if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: opts.corZebra || COR.azulClaro } };
+    });
+    if (opts.aoCriarLinha) opts.aoCriarLinha(row, linha, i);
+  });
+
+  larguraAuto(ws, cabecalho, linhas);
+  ws.autoFilter = { from: { row: headerRow.number, column: 1 }, to: { row: headerRow.number, column: cabecalho.length } };
+  return headerRow;
+}
+
+function linhaTitulo(ws, texto, colspan, cor) {
+  const row = ws.addRow([texto]);
+  ws.mergeCells(row.number, 1, row.number, colspan || 2);
+  const cell = row.getCell(1);
+  cell.font = { bold: true, size: 15, color: { argb: cor || COR.azul } };
+  cell.alignment = { vertical: 'middle' };
+  cell.border = { bottom: { style: 'medium', color: { argb: cor || COR.azul } } };
+  row.height = 28;
+  ws.addRow([]);
+  return row;
+}
+
+function linhaSecao(ws, texto) {
+  const row = ws.addRow([texto]);
+  row.getCell(1).font = { bold: true, size: 11.5, color: { argb: COR.azulEscuro } };
+  row.height = 20;
+  return row;
+}
+
+function linhaKpi(ws, label, valor, opts) {
+  opts = opts || {};
+  const row = ws.addRow([label, valor]);
+  row.getCell(1).font = { color: { argb: COR.textoSuave }, size: 10.5 };
+  row.getCell(1).alignment = { vertical: 'middle' };
+  const vCell = row.getCell(2);
+  vCell.font = { bold: true, size: 12, color: { argb: opts.cor || COR.texto } };
+  vCell.alignment = { vertical: 'middle', horizontal: 'right' };
+  if (typeof valor === 'number' && opts.numFmt !== false) vCell.numFmt = opts.numFmt || FMT_KG;
+  if (opts.destaque) {
+    [1, 2].forEach(c => {
+      row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: opts.corFundo || COR.azulClaro } };
+      row.getCell(c).border = bordaFina();
+    });
+  }
+  row.height = 19;
+  return row;
+}
+
+/* Sub-tabela de 2 colunas com barra de dados nativa do Excel (não é
+   desenho, é o recurso de verdade — funciona igual quando aberto no
+   Excel/Google Sheets) escalada pelo maior valor do próprio bloco. */
+function tabelaComBarra(ws, titulo, cabecalho, linhas, corBarra) {
+  linhaSecao(ws, titulo);
+  const headerRow = ws.addRow(cabecalho);
+  estilizarCabecalho(ws, headerRow.number, COR.azulEscuro);
+  linhas.forEach(l => {
+    const row = ws.addRow(l);
+    row.getCell(1).border = bordaFina();
+    row.getCell(1).font = { size: 10.5, color: { argb: COR.texto } };
+    row.getCell(2).border = bordaFina();
+    row.getCell(2).font = { size: 10.5, bold: true, color: { argb: COR.texto } };
+    row.getCell(2).numFmt = FMT_KG;
+  });
+  if (linhas.length) {
+    const inicio = headerRow.number + 1;
+    const fim = inicio + linhas.length - 1;
+    ws.addConditionalFormatting({
+      ref: 'B' + inicio + ':B' + fim,
+      rules: [{ type: 'dataBar', cfvo: [{ type: 'min' }, { type: 'max' }], color: { argb: corBarra || COR.azul }, gradient: true, border: false, showValue: true }]
+    });
+  }
+  ws.getColumn(1).width = Math.max(ws.getColumn(1).width || 0, 32);
+  ws.getColumn(2).width = Math.max(ws.getColumn(2).width || 0, 13);
+  ws.addRow([]);
+}
+
+async function baixarWorkbook(wb, nomeArquivo) {
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArquivo;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function montarAbaDashboardTipo(wb, lanc, tipo, nomeAba, titulo) {
+  const cor = corDoTipo(tipo);
+  const corFundo = cor === COR.verde ? COR.verdeClaro : COR.azulClaro;
+  const ws = novaAba(wb, nomeAba, { corAba: cor });
+  linhaTitulo(ws, titulo, 2, cor);
+
   const itens = lanc.filter(x => x.tipo === tipo);
-  const linhas = [[titulo], []];
   if (!itens.length) {
-    linhas.push(['Nenhum lançamento deste tipo no período.']);
-    return linhas;
+    ws.addRow(['Nenhum lançamento deste tipo no período.']);
+    ws.getColumn(1).width = 50;
+    return;
   }
 
   const total = itens.reduce((s, x) => s + pesoComSinal(x), 0);
   const pesos = itens.map(x => x.peso);
 
-  linhas.push(['Total (kg)', Math.round(total)]);
-  linhas.push(['Nº de notas', itens.length]);
-  linhas.push(['Peso médio por nota (kg)', Math.round(total / itens.length)]);
-  linhas.push(['Maior nota (kg)', Math.max(...pesos)]);
-  linhas.push(['Menor nota (kg)', Math.min(...pesos)]);
-  linhas.push([]);
+  linhaKpi(ws, 'Total no período', Math.round(total), { destaque: true, cor, corFundo });
+  linhaKpi(ws, 'Nº de notas', itens.length, { numFmt: false });
+  linhaKpi(ws, 'Peso médio por nota', Math.round(total / itens.length));
+  linhaKpi(ws, 'Maior nota', Math.max(...pesos));
+  linhaKpi(ws, 'Menor nota', Math.min(...pesos));
+  ws.addRow([]);
 
   const porCliente = {};
   itens.forEach(x => { const nome = x.parceiro || '(sem nome)'; porCliente[nome] = (porCliente[nome] || 0) + pesoComSinal(x); });
-  const clientesOrdenados = Object.entries(porCliente).sort((a, b) => b[1] - a[1]);
-  const maxCliente = clientesOrdenados.length ? Math.max(...clientesOrdenados.map(c => Math.abs(c[1]))) : 0;
-  linhas.push(['Por cliente/fornecedor', 'kg', '']);
-  clientesOrdenados.forEach(([nome, kg]) => linhas.push([nome, Math.round(kg), barraTexto(kg, maxCliente)]));
-  linhas.push([]);
+  const clientesOrdenados = Object.entries(porCliente).sort((a, b) => b[1] - a[1]).map(([n, kg]) => [n, Math.round(kg)]);
+  tabelaComBarra(ws, 'Por cliente / fornecedor', ['Cliente/Fornecedor', 'kg'], clientesOrdenados, cor);
 
   const porDia = {};
   itens.forEach(x => { porDia[x.data] = (porDia[x.data] || 0) + pesoComSinal(x); });
-  const diasOrdenados = Object.keys(porDia).sort();
-  const maxDia = Math.max(...diasOrdenados.map(d => Math.abs(porDia[d])));
-  linhas.push(['Por dia', 'kg', '']);
-  diasOrdenados.forEach(dia => linhas.push([fmtDataBR(dia), Math.round(porDia[dia]), barraTexto(porDia[dia], maxDia)]));
-
-  return linhas;
+  const diasOrdenados = Object.keys(porDia).sort().map(d => [fmtDataBR(d), Math.round(porDia[d])]);
+  tabelaComBarra(ws, 'Evolução por dia', ['Dia', 'kg'], diasOrdenados, cor);
 }
 
-function montarAbaDashboardGeral(mes, lanc, b) {
-  const linhas = [['Visão geral — ' + nomeMes(mes)], []];
+function montarAbaDashboardGeral(wb, mes, lanc, b) {
+  const ws = novaAba(wb, 'Dashboard Geral', { corAba: COR.azul });
+  linhaTitulo(ws, 'Visão geral — ' + nomeMes(mes), 2, COR.azul);
 
-  linhas.push(['Balanço do mês', '']);
-  linhas.push(['Estoque inicial (kg)', Math.round(b.estoqueInicial)]);
-  linhas.push(['+ Entrada de bobina (kg)', Math.round(b.entrada)]);
-  linhas.push(['Estoque inicial + entrada (kg)', Math.round(b.subtotal)]);
-  linhas.push(['- Saída em chapa (kg)', Math.round(b.saidaChapa)]);
-  linhas.push(['- Saída em papel ondulado (kg)', Math.round(b.saidaPapelOndulado)]);
-  linhas.push(['Estoque teórico final (kg)', Math.round(b.teorico)]);
-  linhas.push(['Vendido como apara (kg)', Math.round(b.saidaApara)]);
-  linhas.push(['Estoque final informado (kg)', b.estoqueFinal != null ? Math.round(b.estoqueFinal) : '']);
-  linhas.push(['Perda (kg)', b.perda != null ? Math.round(b.perda) : '']);
-  linhas.push(['% Perda', b.percPerda != null ? b.percPerda.toFixed(2) + '%' : '']);
-  linhas.push(['Meta (%)', b.meta]);
-  linhas.push([]);
+  linhaSecao(ws, 'Balanço do mês');
+  linhaKpi(ws, 'Estoque inicial', Math.round(b.estoqueInicial));
+  linhaKpi(ws, '+ Entrada de bobina', Math.round(b.entrada), { cor: COR.verde });
+  linhaKpi(ws, 'Estoque inicial + entrada', Math.round(b.subtotal));
+  linhaKpi(ws, '- Saída em chapa', Math.round(b.saidaChapa));
+  linhaKpi(ws, '- Saída em papel ondulado', Math.round(b.saidaPapelOndulado));
+  linhaKpi(ws, 'Estoque teórico final', Math.round(b.teorico));
+  linhaKpi(ws, 'Vendido como apara', Math.round(b.saidaApara));
+  linhaKpi(ws, 'Estoque final informado', b.estoqueFinal != null ? Math.round(b.estoqueFinal) : '—', { numFmt: b.estoqueFinal != null });
+  const corPerda = b.percPerda == null ? COR.texto : (b.percPerda <= b.meta ? COR.verde : COR.alerta);
+  linhaKpi(ws, 'Perda', b.perda != null ? Math.round(b.perda) : '—', { numFmt: b.perda != null, cor: corPerda, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro });
+  linhaKpi(ws, '% Perda (meta ' + b.meta + '%)', b.percPerda != null ? b.percPerda.toFixed(1) + '%' : '—', { numFmt: false, cor: corPerda });
+  ws.addRow([]);
 
-  linhas.push(['Comparativo por tipo', 'kg', '']);
-  const tipos = [
-    ['Compra de bobina (líquida)', 'compra_bobina'],
+  linhaSecao(ws, 'Comparativo por tipo');
+  const headerRow = ws.addRow(['Tipo', 'kg']);
+  estilizarCabecalho(ws, headerRow.number, COR.azulEscuro);
+
+  const bobinaLiquida = lanc.filter(x => x.tipo === 'compra_bobina').reduce((s, x) => s + pesoComSinal(x), 0);
+  const rowBobina = ws.addRow(['Compra de bobina (líquida)', Math.round(bobinaLiquida)]);
+  const vendas = [
     ['Venda de chapa', 'venda_chapa'],
     ['Papel Ondulado', 'venda_papel_ondulado'],
     ['Venda de aparas', 'venda_apara']
-  ];
-  const totais = tipos.map(([label, tipo]) => [label, lanc.filter(x => x.tipo === tipo).reduce((s, x) => s + pesoComSinal(x), 0)]);
-  const maxTipo = Math.max(...totais.map(t => Math.abs(t[1])));
-  totais.forEach(([label, kg]) => linhas.push([label, Math.round(kg), barraTexto(kg, maxTipo)]));
+  ].map(([label, tipo]) => [label, Math.round(lanc.filter(x => x.tipo === tipo).reduce((s, x) => s + pesoComSinal(x), 0))]);
+  const linhasVendas = vendas.map(v => ws.addRow(v));
 
-  return linhas;
+  [rowBobina, ...linhasVendas].forEach(row => {
+    row.getCell(1).border = bordaFina();
+    row.getCell(1).font = { size: 10.5, color: { argb: COR.texto } };
+    row.getCell(2).border = bordaFina();
+    row.getCell(2).font = { size: 10.5, bold: true, color: { argb: COR.texto } };
+    row.getCell(2).numFmt = FMT_KG;
+  });
+
+  ws.addConditionalFormatting({
+    ref: 'B' + rowBobina.number,
+    rules: [{ type: 'dataBar', cfvo: [{ type: 'num', value: 0 }, { type: 'max' }], color: { argb: COR.verde }, gradient: true, border: false, showValue: true }]
+  });
+  if (linhasVendas.length) {
+    ws.addConditionalFormatting({
+      ref: 'B' + linhasVendas[0].number + ':B' + linhasVendas[linhasVendas.length - 1].number,
+      rules: [{ type: 'dataBar', cfvo: [{ type: 'min' }, { type: 'max' }], color: { argb: COR.azul }, gradient: true, border: false, showValue: true }]
+    });
+  }
+
+  ws.getColumn(1).width = 30;
+  ws.getColumn(2).width = 15;
 }
 
-function largurasPadraoDashboard() { return [{ wch: 34 }, { wch: 12 }, { wch: 26 }]; }
-
-document.getElementById('btnExportarXlsx').addEventListener('click', () => {
+document.getElementById('btnExportarXlsx').addEventListener('click', async () => {
   const mes = document.getElementById('mesFechamento').value;
   const b = calcularBalanco(mes);
   const lanc = getLancamentos(mes).slice().sort((a, b2) => a.data.localeCompare(b2.data));
 
-  const wb = XLSX.utils.book_new();
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Controle de Aparas · Prime';
+  wb.created = new Date();
 
-  const detalhe = [['Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Fornecedor/Cliente', 'Nº Nota', 'Arquivo', 'Origem']];
-  lanc.forEach(x => detalhe.push([fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.parceiro || '', x.nota || '', x.arquivo || '', x.origem]));
-  const wsDet = XLSX.utils.aoa_to_sheet(detalhe);
-  XLSX.utils.book_append_sheet(wb, wsDet, 'Lançamentos');
+  const wsDet = novaAba(wb, 'Lançamentos', { corAba: COR.azul, freezeHeader: true });
+  construirTabela(wsDet, ['Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Fornecedor/Cliente', 'Nº Nota', 'Arquivo', 'Origem'],
+    lanc.map(x => [fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.parceiro || '', x.nota || '', x.arquivo || '', x.origem]),
+    {
+      aoCriarLinha: (row, linha, i) => {
+        const x = lanc[i];
+        row.getCell(2).font = { bold: true, size: 10.5, color: { argb: corDoTipo(x.tipo) } };
+        row.getCell(4).numFmt = FMT_KG;
+        row.getCell(4).alignment = { horizontal: 'right' };
+        if (x.devolucao) row.getCell(3).font = { bold: true, size: 10.5, color: { argb: COR.alerta } };
+      }
+    });
 
+  const wsTotais = novaAba(wb, 'Totais por Tipo', { corAba: COR.azul });
+  linhaTitulo(wsTotais, 'Totais por tipo — ' + nomeMes(mes), 2, COR.azul);
+  linhaKpi(wsTotais, 'Venda de chapa', Math.round(lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + pesoComSinal(x), 0)));
+  linhaKpi(wsTotais, 'Venda de papel ondulado', Math.round(lanc.filter(x => x.tipo === 'venda_papel_ondulado').reduce((s, x) => s + pesoComSinal(x), 0)));
+  linhaKpi(wsTotais, 'Venda de aparas', Math.round(lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + pesoComSinal(x), 0)));
+  wsTotais.addRow([]);
   const bobinaItens = lanc.filter(x => x.tipo === 'compra_bobina');
   const bobinaBruta = bobinaItens.filter(x => !x.devolucao).reduce((s, x) => s + x.peso, 0);
   const bobinaDevolvido = bobinaItens.filter(x => x.devolucao).reduce((s, x) => s + x.peso, 0);
-  const totaisPorTipo = [
-    ['Totais por tipo', nomeMes(mes)],
-    [],
-    ['Venda de chapa =', Math.round(lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + pesoComSinal(x), 0))],
-    ['Venda de papel ondulado =', Math.round(lanc.filter(x => x.tipo === 'venda_papel_ondulado').reduce((s, x) => s + pesoComSinal(x), 0))],
-    ['Venda de aparas =', Math.round(lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + pesoComSinal(x), 0))],
-    [],
-    ['Compra de bobina (bruta) =', Math.round(bobinaBruta)],
-    ['Devolução de bobina =', Math.round(bobinaDevolvido)],
-    ['Compra de bobina (líquida) =', Math.round(bobinaBruta - bobinaDevolvido)]
-  ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(totaisPorTipo), 'Totais por Tipo');
+  linhaKpi(wsTotais, 'Compra de bobina (bruta)', Math.round(bobinaBruta), { cor: COR.verde });
+  linhaKpi(wsTotais, 'Devolução de bobina', Math.round(bobinaDevolvido), { cor: bobinaDevolvido ? COR.alerta : COR.texto });
+  linhaKpi(wsTotais, 'Compra de bobina (líquida)', Math.round(bobinaBruta - bobinaDevolvido), { destaque: true, cor: COR.verde, corFundo: COR.verdeClaro });
+  wsTotais.getColumn(1).width = 32;
+  wsTotais.getColumn(2).width = 16;
 
-  const resumo = [
-    ['Perda de papel', nomeMes(mes)],
-    [],
-    ['Estoque inicial (kg)', b.estoqueInicial],
-    ['+ Entrou (compra de bobina)', b.entrada],
-    ['Estoque inicial + entrada', b.subtotal],
-    ['- Saiu em chapa (produção)', b.saidaChapa],
-    ['- Saiu em papel ondulado', b.saidaPapelOndulado],
-    ['Estoque teórico final', b.teorico],
-    ['Vendido como apara (entra como perda) (kg)', b.saidaApara],
-    ['Estoque final informado', b.estoqueFinal],
-    ['Perda (kg)', b.perda],
-    ['% Perda', b.percPerda != null ? b.percPerda.toFixed(2) + '%' : ''],
-    ['Meta (%)', b.meta]
-  ];
-  const wsRes = XLSX.utils.aoa_to_sheet(resumo);
-  XLSX.utils.book_append_sheet(wb, wsRes, 'Resumo');
+  const wsRes = novaAba(wb, 'Resumo', { corAba: COR.azul });
+  linhaTitulo(wsRes, 'Perda de papel — ' + nomeMes(mes), 2, COR.azul);
+  linhaKpi(wsRes, 'Estoque inicial', b.estoqueInicial, { numFmt: b.estoqueInicial != null });
+  linhaKpi(wsRes, '+ Entrou (compra de bobina)', b.entrada, { cor: COR.verde });
+  linhaKpi(wsRes, 'Estoque inicial + entrada', b.subtotal);
+  linhaKpi(wsRes, '- Saiu em chapa (produção)', b.saidaChapa);
+  linhaKpi(wsRes, '- Saiu em papel ondulado', b.saidaPapelOndulado);
+  linhaKpi(wsRes, 'Estoque teórico final', b.teorico);
+  linhaKpi(wsRes, 'Vendido como apara (entra como perda)', b.saidaApara);
+  linhaKpi(wsRes, 'Estoque final informado', b.estoqueFinal != null ? b.estoqueFinal : '—', { numFmt: b.estoqueFinal != null });
+  const corPerdaRes = b.percPerda == null ? COR.texto : (b.percPerda <= b.meta ? COR.verde : COR.alerta);
+  linhaKpi(wsRes, 'Perda (kg)', b.perda != null ? b.perda : '—', { numFmt: b.perda != null, cor: corPerdaRes, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro });
+  linhaKpi(wsRes, '% Perda', b.percPerda != null ? b.percPerda.toFixed(2) + '%' : '—', { numFmt: false, cor: corPerdaRes });
+  linhaKpi(wsRes, 'Meta (%)', b.meta, { numFmt: false });
+  wsRes.getColumn(1).width = 36;
+  wsRes.getColumn(2).width = 16;
 
-  const wsDashGeral = XLSX.utils.aoa_to_sheet(montarAbaDashboardGeral(mes, lanc, b));
-  wsDashGeral['!cols'] = largurasPadraoDashboard();
-  XLSX.utils.book_append_sheet(wb, wsDashGeral, 'Dashboard Geral');
+  montarAbaDashboardGeral(wb, mes, lanc, b);
+  montarAbaDashboardTipo(wb, lanc, 'venda_chapa', 'Dashboard Chapas', 'Dashboard — Venda de Chapa');
+  montarAbaDashboardTipo(wb, lanc, 'venda_papel_ondulado', 'Dashboard Ondulado', 'Dashboard — Papel Ondulado');
+  montarAbaDashboardTipo(wb, lanc, 'venda_apara', 'Dashboard Aparas', 'Dashboard — Aparas');
 
-  const wsDashChapa = XLSX.utils.aoa_to_sheet(montarAbaDashboardTipo(lanc, 'venda_chapa', 'Dashboard — Venda de Chapa'));
-  wsDashChapa['!cols'] = largurasPadraoDashboard();
-  XLSX.utils.book_append_sheet(wb, wsDashChapa, 'Dashboard Chapas');
-
-  const wsDashOndulado = XLSX.utils.aoa_to_sheet(montarAbaDashboardTipo(lanc, 'venda_papel_ondulado', 'Dashboard — Papel Ondulado'));
-  wsDashOndulado['!cols'] = largurasPadraoDashboard();
-  XLSX.utils.book_append_sheet(wb, wsDashOndulado, 'Dashboard Ondulado');
-
-  const wsDashApara = XLSX.utils.aoa_to_sheet(montarAbaDashboardTipo(lanc, 'venda_apara', 'Dashboard — Aparas'));
-  wsDashApara['!cols'] = largurasPadraoDashboard();
-  XLSX.utils.book_append_sheet(wb, wsDashApara, 'Dashboard Aparas');
-
-  XLSX.writeFile(wb, 'Perda_Papel_' + mes + '.xlsx');
+  await baixarWorkbook(wb, 'Perda_Papel_' + mes + '.xlsx');
+  toast('Planilha exportada');
 });
 
 document.getElementById('btnCopiarResumo').addEventListener('click', () => {
@@ -1182,31 +1343,50 @@ function renderHistorico() {
   }).join('');
 }
 
-document.getElementById('btnExportarHistoricoXlsx').addEventListener('click', () => {
+document.getElementById('btnExportarHistoricoXlsx').addEventListener('click', async () => {
   const fechamentos = lerLS(LS_FECH);
   const lancamentos = lerLS(LS_LANC);
   const meses = Array.from(new Set([...Object.keys(fechamentos), ...Object.keys(lancamentos)])).sort();
 
   if (!meses.length) { toast('Nada pra exportar ainda'); return; }
 
-  const wb = XLSX.utils.book_new();
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Controle de Aparas · Prime';
+  wb.created = new Date();
 
-  const historico = [['Mês', 'Estoque inicial (kg)', 'Entrou (kg)', 'Saiu chapa (kg)', 'Saiu papel ondulado (kg)', 'Estoque teórico (kg)', 'Vendido apara (kg)', 'Estoque final informado (kg)', 'Perda (kg)', '% Perda', 'Meta (%)']];
-  meses.forEach(mes => {
-    const b = calcularBalanco(mes);
-    historico.push([nomeMes(mes), b.estoqueInicial, b.entrada, b.saidaChapa, b.saidaPapelOndulado, b.teorico, b.saidaApara, b.estoqueFinal, b.perda, b.percPerda != null ? b.percPerda.toFixed(2) + '%' : '', b.meta]);
-  });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(historico), 'Histórico');
+  const balancos = meses.map(mes => ({ mes, b: calcularBalanco(mes) }));
 
-  const detalhe = [['Mês', 'Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Fornecedor/Cliente', 'Nº Nota', 'Arquivo', 'Origem']];
-  meses.forEach(mes => {
-    getLancamentos(mes).slice().sort((a, b2) => a.data.localeCompare(b2.data)).forEach(x => {
-      detalhe.push([nomeMes(mes), fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.parceiro || '', x.nota || '', x.arquivo || '', x.origem]);
+  const wsHist = novaAba(wb, 'Histórico', { corAba: COR.azul, freezeHeader: true });
+  construirTabela(wsHist,
+    ['Mês', 'Estoque inicial (kg)', 'Entrou (kg)', 'Saiu chapa (kg)', 'Saiu papel ondulado (kg)', 'Estoque teórico (kg)', 'Vendido apara (kg)', 'Estoque final informado (kg)', 'Perda (kg)', '% Perda', 'Meta (%)'],
+    balancos.map(({ mes, b }) => [nomeMes(mes), b.estoqueInicial, b.entrada, b.saidaChapa, b.saidaPapelOndulado, b.teorico, b.saidaApara, b.estoqueFinal, b.perda, b.percPerda != null ? b.percPerda.toFixed(1) + '%' : '', b.meta]),
+    {
+      aoCriarLinha: (row, linha, i) => {
+        const { b } = balancos[i];
+        const corPerda = b.percPerda == null ? COR.texto : (b.percPerda <= b.meta ? COR.verde : COR.alerta);
+        [9, 10].forEach(col => { row.getCell(col).font = { bold: true, size: 10.5, color: { argb: corPerda } }; });
+        [2, 3, 4, 5, 6, 7, 8].forEach(col => { row.getCell(col).numFmt = FMT_KG; row.getCell(col).alignment = { horizontal: 'right' }; });
+      }
     });
-  });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detalhe), 'Lançamentos');
 
-  XLSX.writeFile(wb, 'Controle_Aparas_Historico_Completo.xlsx');
+  const wsDet = novaAba(wb, 'Lançamentos', { corAba: COR.azul, freezeHeader: true });
+  const todosLanc = [];
+  meses.forEach(mes => {
+    getLancamentos(mes).slice().sort((a, b2) => a.data.localeCompare(b2.data)).forEach(x => todosLanc.push(Object.assign({ mesLabel: nomeMes(mes) }, x)));
+  });
+  construirTabela(wsDet, ['Mês', 'Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Fornecedor/Cliente', 'Nº Nota', 'Arquivo', 'Origem'],
+    todosLanc.map(x => [x.mesLabel, fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.parceiro || '', x.nota || '', x.arquivo || '', x.origem]),
+    {
+      aoCriarLinha: (row, linha, i) => {
+        const x = todosLanc[i];
+        row.getCell(3).font = { bold: true, size: 10.5, color: { argb: corDoTipo(x.tipo) } };
+        row.getCell(5).numFmt = FMT_KG;
+        row.getCell(5).alignment = { horizontal: 'right' };
+        if (x.devolucao) row.getCell(4).font = { bold: true, size: 10.5, color: { argb: COR.alerta } };
+      }
+    });
+
+  await baixarWorkbook(wb, 'Controle_Aparas_Historico_Completo.xlsx');
   toast('Histórico completo exportado');
 });
 

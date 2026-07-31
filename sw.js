@@ -1,10 +1,10 @@
-const CACHE = 'aparas-v2';
+const CACHE = 'aparas-v3';
 const SHARE_CACHE = 'aparas-share-v1';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'
 ];
 
 self.addEventListener('install', e => {
