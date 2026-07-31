@@ -941,6 +941,87 @@ document.getElementById('btnSalvarFechamento').addEventListener('click', () => {
   toast('Fechamento salvo');
 });
 
+/* ===================== DASHBOARDS (planilha exportada) =====================
+   A biblioteca XLSX gratuita não desenha gráfico nativo do Excel, então o
+   "dashboard" é montado como tabela + barra de texto (caracteres █) cujo
+   tamanho é proporcional ao valor — dá pra comparar visualmente sem precisar
+   de gráfico de verdade. */
+function barraTexto(valor, max, largura) {
+  largura = largura || 24;
+  if (!max || max <= 0 || !valor) return '';
+  const n = Math.max(0, Math.round((Math.abs(valor) / max) * largura));
+  return '█'.repeat(n);
+}
+
+function montarAbaDashboardTipo(lanc, tipo, titulo) {
+  const itens = lanc.filter(x => x.tipo === tipo);
+  const linhas = [[titulo], []];
+  if (!itens.length) {
+    linhas.push(['Nenhum lançamento deste tipo no período.']);
+    return linhas;
+  }
+
+  const total = itens.reduce((s, x) => s + pesoComSinal(x), 0);
+  const pesos = itens.map(x => x.peso);
+
+  linhas.push(['Total (kg)', Math.round(total)]);
+  linhas.push(['Nº de notas', itens.length]);
+  linhas.push(['Peso médio por nota (kg)', Math.round(total / itens.length)]);
+  linhas.push(['Maior nota (kg)', Math.max(...pesos)]);
+  linhas.push(['Menor nota (kg)', Math.min(...pesos)]);
+  linhas.push([]);
+
+  const porCliente = {};
+  itens.forEach(x => { const nome = x.parceiro || '(sem nome)'; porCliente[nome] = (porCliente[nome] || 0) + pesoComSinal(x); });
+  const clientesOrdenados = Object.entries(porCliente).sort((a, b) => b[1] - a[1]);
+  const maxCliente = clientesOrdenados.length ? Math.max(...clientesOrdenados.map(c => Math.abs(c[1]))) : 0;
+  linhas.push(['Por cliente/fornecedor', 'kg', '']);
+  clientesOrdenados.forEach(([nome, kg]) => linhas.push([nome, Math.round(kg), barraTexto(kg, maxCliente)]));
+  linhas.push([]);
+
+  const porDia = {};
+  itens.forEach(x => { porDia[x.data] = (porDia[x.data] || 0) + pesoComSinal(x); });
+  const diasOrdenados = Object.keys(porDia).sort();
+  const maxDia = Math.max(...diasOrdenados.map(d => Math.abs(porDia[d])));
+  linhas.push(['Por dia', 'kg', '']);
+  diasOrdenados.forEach(dia => linhas.push([fmtDataBR(dia), Math.round(porDia[dia]), barraTexto(porDia[dia], maxDia)]));
+
+  return linhas;
+}
+
+function montarAbaDashboardGeral(mes, lanc, b) {
+  const linhas = [['Visão geral — ' + nomeMes(mes)], []];
+
+  linhas.push(['Balanço do mês', '']);
+  linhas.push(['Estoque inicial (kg)', Math.round(b.estoqueInicial)]);
+  linhas.push(['+ Entrada de bobina (kg)', Math.round(b.entrada)]);
+  linhas.push(['Estoque inicial + entrada (kg)', Math.round(b.subtotal)]);
+  linhas.push(['- Saída em chapa (kg)', Math.round(b.saidaChapa)]);
+  linhas.push(['- Saída em papel ondulado (kg)', Math.round(b.saidaPapelOndulado)]);
+  linhas.push(['Estoque teórico final (kg)', Math.round(b.teorico)]);
+  linhas.push(['Vendido como apara (kg)', Math.round(b.saidaApara)]);
+  linhas.push(['Estoque final informado (kg)', b.estoqueFinal != null ? Math.round(b.estoqueFinal) : '']);
+  linhas.push(['Perda (kg)', b.perda != null ? Math.round(b.perda) : '']);
+  linhas.push(['% Perda', b.percPerda != null ? b.percPerda.toFixed(2) + '%' : '']);
+  linhas.push(['Meta (%)', b.meta]);
+  linhas.push([]);
+
+  linhas.push(['Comparativo por tipo', 'kg', '']);
+  const tipos = [
+    ['Compra de bobina (líquida)', 'compra_bobina'],
+    ['Venda de chapa', 'venda_chapa'],
+    ['Papel Ondulado', 'venda_papel_ondulado'],
+    ['Venda de aparas', 'venda_apara']
+  ];
+  const totais = tipos.map(([label, tipo]) => [label, lanc.filter(x => x.tipo === tipo).reduce((s, x) => s + pesoComSinal(x), 0)]);
+  const maxTipo = Math.max(...totais.map(t => Math.abs(t[1])));
+  totais.forEach(([label, kg]) => linhas.push([label, Math.round(kg), barraTexto(kg, maxTipo)]));
+
+  return linhas;
+}
+
+function largurasPadraoDashboard() { return [{ wch: 34 }, { wch: 12 }, { wch: 26 }]; }
+
 document.getElementById('btnExportarXlsx').addEventListener('click', () => {
   const mes = document.getElementById('mesFechamento').value;
   const b = calcularBalanco(mes);
@@ -952,6 +1033,22 @@ document.getElementById('btnExportarXlsx').addEventListener('click', () => {
   lanc.forEach(x => detalhe.push([fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.parceiro || '', x.nota || '', x.arquivo || '', x.origem]));
   const wsDet = XLSX.utils.aoa_to_sheet(detalhe);
   XLSX.utils.book_append_sheet(wb, wsDet, 'Lançamentos');
+
+  const bobinaItens = lanc.filter(x => x.tipo === 'compra_bobina');
+  const bobinaBruta = bobinaItens.filter(x => !x.devolucao).reduce((s, x) => s + x.peso, 0);
+  const bobinaDevolvido = bobinaItens.filter(x => x.devolucao).reduce((s, x) => s + x.peso, 0);
+  const totaisPorTipo = [
+    ['Totais por tipo', nomeMes(mes)],
+    [],
+    ['Venda de chapa =', Math.round(lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + pesoComSinal(x), 0))],
+    ['Venda de papel ondulado =', Math.round(lanc.filter(x => x.tipo === 'venda_papel_ondulado').reduce((s, x) => s + pesoComSinal(x), 0))],
+    ['Venda de aparas =', Math.round(lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + pesoComSinal(x), 0))],
+    [],
+    ['Compra de bobina (bruta) =', Math.round(bobinaBruta)],
+    ['Devolução de bobina =', Math.round(bobinaDevolvido)],
+    ['Compra de bobina (líquida) =', Math.round(bobinaBruta - bobinaDevolvido)]
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(totaisPorTipo), 'Totais por Tipo');
 
   const resumo = [
     ['Perda de papel', nomeMes(mes)],
@@ -970,6 +1067,22 @@ document.getElementById('btnExportarXlsx').addEventListener('click', () => {
   ];
   const wsRes = XLSX.utils.aoa_to_sheet(resumo);
   XLSX.utils.book_append_sheet(wb, wsRes, 'Resumo');
+
+  const wsDashGeral = XLSX.utils.aoa_to_sheet(montarAbaDashboardGeral(mes, lanc, b));
+  wsDashGeral['!cols'] = largurasPadraoDashboard();
+  XLSX.utils.book_append_sheet(wb, wsDashGeral, 'Dashboard Geral');
+
+  const wsDashChapa = XLSX.utils.aoa_to_sheet(montarAbaDashboardTipo(lanc, 'venda_chapa', 'Dashboard — Venda de Chapa'));
+  wsDashChapa['!cols'] = largurasPadraoDashboard();
+  XLSX.utils.book_append_sheet(wb, wsDashChapa, 'Dashboard Chapas');
+
+  const wsDashOndulado = XLSX.utils.aoa_to_sheet(montarAbaDashboardTipo(lanc, 'venda_papel_ondulado', 'Dashboard — Papel Ondulado'));
+  wsDashOndulado['!cols'] = largurasPadraoDashboard();
+  XLSX.utils.book_append_sheet(wb, wsDashOndulado, 'Dashboard Ondulado');
+
+  const wsDashApara = XLSX.utils.aoa_to_sheet(montarAbaDashboardTipo(lanc, 'venda_apara', 'Dashboard — Aparas'));
+  wsDashApara['!cols'] = largurasPadraoDashboard();
+  XLSX.utils.book_append_sheet(wb, wsDashApara, 'Dashboard Aparas');
 
   XLSX.writeFile(wb, 'Perda_Papel_' + mes + '.xlsx');
 });
