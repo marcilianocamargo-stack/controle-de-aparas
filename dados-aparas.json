@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-07-31T14:29:51.989Z",
+  "geradoEm": "2026-07-31T14:37:32.562Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -723,5 +723,12 @@
       }
     ]
   },
-  "fechamentos": {}
+  "fechamentos": {
+    "2026-07": {
+      "estoqueInicial": 72854,
+      "estoqueFinal": null,
+      "meta": 8,
+      "fechadoEm": "2026-07-31T14:33:40.312Z"
+    }
+  }
 }
