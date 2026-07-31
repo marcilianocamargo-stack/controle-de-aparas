@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-07-31T16:52:40.305Z",
+  "geradoEm": "2026-07-31T18:32:45.370Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -123,18 +123,6 @@
         "criadoEm": "2026-07-31T12:25:34.088Z"
       },
       {
-        "id": "1785503535759_mw5btw",
-        "data": "2026-07-07",
-        "tipo": "compra_bobina",
-        "peso": 32770,
-        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
-        "nota": "1416",
-        "arquivo": "colado",
-        "devolucao": true,
-        "origem": "pdf",
-        "criadoEm": "2026-07-31T13:12:15.759Z"
-      },
-      {
         "id": "1785503550469_e4n9a7",
         "data": "2026-07-06",
         "tipo": "venda_chapa",
@@ -145,30 +133,6 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-07-31T13:12:30.469Z"
-      },
-      {
-        "id": "1785503621578_0plcah",
-        "data": "2026-07-07",
-        "tipo": "compra_bobina",
-        "peso": 34000,
-        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
-        "nota": "1418",
-        "arquivo": "colado",
-        "devolucao": true,
-        "origem": "pdf",
-        "criadoEm": "2026-07-31T13:13:41.578Z"
-      },
-      {
-        "id": "1785503661665_s7c5by",
-        "data": "2026-07-07",
-        "tipo": "compra_bobina",
-        "peso": 32410,
-        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
-        "nota": "1419",
-        "arquivo": "colado",
-        "devolucao": true,
-        "origem": "pdf",
-        "criadoEm": "2026-07-31T13:14:21.665Z"
       },
       {
         "id": "1785503712170_wx6fzx",
@@ -863,15 +827,114 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-07-31T16:52:30.547Z"
+      },
+      {
+        "id": "1785520151887_bqfew",
+        "data": "2026-07-31",
+        "tipo": "venda_chapa",
+        "peso": 222,
+        "parceiro": "A4 EMBALAGENS E E-COMMERCE LTDA",
+        "nota": "1413",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T17:49:11.887Z"
+      },
+      {
+        "id": "1785520483469_cswsp",
+        "data": "2026-07-31",
+        "tipo": "venda_papel_ondulado",
+        "peso": 740,
+        "parceiro": "ABAPEL COMERCIO DE EMBALAGENS LTDA",
+        "nota": "1431",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T17:54:43.469Z"
+      },
+      {
+        "id": "1785520569009_6v6y4",
+        "data": "2026-07-13",
+        "tipo": "venda_papel_ondulado",
+        "peso": 50,
+        "parceiro": "METALURGICA FENOBRAS LTDA",
+        "nota": "1436",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T17:56:09.009Z"
+      },
+      {
+        "id": "1785520688158_mp0c8",
+        "data": "2026-07-13",
+        "tipo": "venda_papel_ondulado",
+        "peso": 430,
+        "parceiro": "KRAFTBOX COMERCIO DE EMBALAGENS LTDA",
+        "nota": "1438",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T17:58:08.158Z"
+      },
+      {
+        "id": "1785520733605_sxitm",
+        "data": "2026-07-31",
+        "tipo": "venda_papel_ondulado",
+        "peso": 1040,
+        "parceiro": "INDUSTRIA E COM. DE COUROS INTERNACIONAIS LTDA",
+        "nota": "1440",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T17:58:53.605Z"
+      },
+      {
+        "id": "1785520853057_2ju1f",
+        "data": "2026-07-13",
+        "tipo": "venda_papel_ondulado",
+        "peso": 1550,
+        "parceiro": "MUNDO FIT SPORTWEAR LTDA",
+        "nota": "1437",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T18:00:53.057Z"
+      },
+      {
+        "id": "1785521324086_coqdt",
+        "data": "2026-07-31",
+        "tipo": "venda_apara",
+        "peso": 29310,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1425",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T18:08:44.086Z"
+      },
+      {
+        "id": "1785521888582_azr9o",
+        "data": "2026-07-31",
+        "tipo": "venda_papel_ondulado",
+        "peso": 3130,
+        "parceiro": "Notas Roberto",
+        "nota": "0000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T18:18:08.582Z"
+      },
+      {
+        "id": "1785522000250_wsh6s",
+        "data": "2026-07-31",
+        "tipo": "venda_chapa",
+        "peso": 14536,
+        "parceiro": "Notas Roberto",
+        "nota": "0000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-07-31T18:20:00.250Z"
       }
     ]
   },
   "fechamentos": {
     "2026-07": {
       "estoqueInicial": 72854,
-      "estoqueFinal": 45000,
+      "estoqueFinal": 60000,
       "meta": 8,
-      "fechadoEm": "2026-07-31T16:19:15.427Z"
+      "fechadoEm": "2026-07-31T18:20:22.754Z"
     }
   }
 }
