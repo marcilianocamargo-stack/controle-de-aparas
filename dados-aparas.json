@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-07-31T18:32:45.370Z",
+  "geradoEm": "2026-08-03T11:35:13.737Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -926,15 +926,27 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-07-31T18:20:00.250Z"
+      },
+      {
+        "id": "1785756899370_3hxub",
+        "data": "2026-07-31",
+        "tipo": "venda_chapa",
+        "peso": 6.64,
+        "parceiro": "Z4A EMBALAGENS LTDA",
+        "nota": "27267",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-03T11:34:59.370Z"
       }
-    ]
+    ],
+    "2026-08": []
   },
   "fechamentos": {
     "2026-07": {
       "estoqueInicial": 72854,
-      "estoqueFinal": 60000,
+      "estoqueFinal": 97572,
       "meta": 8,
-      "fechadoEm": "2026-07-31T18:20:22.754Z"
+      "fechadoEm": "2026-08-03T02:33:59.020Z"
     }
   }
 }
