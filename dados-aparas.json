@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-08-03T11:35:13.737Z",
+  "geradoEm": "2026-08-06T19:42:11.252Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -906,6 +906,28 @@
         "criadoEm": "2026-07-31T18:08:44.086Z"
       },
       {
+        "id": "1785757130358_li5ld",
+        "data": "2026-07-31",
+        "tipo": "venda_chapa",
+        "peso": 6640,
+        "parceiro": "Z4A EMBALAGENS LTDA",
+        "nota": "27267",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-03T11:38:50.358Z"
+      },
+      {
+        "id": "1785756899370_3hxub",
+        "data": "2026-07-31",
+        "tipo": "venda_chapa",
+        "peso": 6.64,
+        "parceiro": "Z4A EMBALAGENS LTDA",
+        "nota": "27267",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-03T11:34:59.370Z"
+      },
+      {
         "id": "1785521888582_azr9o",
         "data": "2026-07-31",
         "tipo": "venda_papel_ondulado",
@@ -926,27 +948,29 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-07-31T18:20:00.250Z"
-      },
-      {
-        "id": "1785756899370_3hxub",
-        "data": "2026-07-31",
-        "tipo": "venda_chapa",
-        "peso": 6.64,
-        "parceiro": "Z4A EMBALAGENS LTDA",
-        "nota": "27267",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-08-03T11:34:59.370Z"
       }
     ],
-    "2026-08": []
+    "2026-08": [
+      {
+        "id": "1786045259334_eppbe",
+        "data": "2026-08-05",
+        "tipo": "compra_bobina",
+        "peso": 31783,
+        "parceiro": "Novacki",
+        "nota": "79033",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-06T19:40:59.334Z"
+      }
+    ],
+    "2026-01": []
   },
   "fechamentos": {
     "2026-07": {
       "estoqueInicial": 72854,
-      "estoqueFinal": 97572,
+      "estoqueFinal": 70572,
       "meta": 8,
-      "fechadoEm": "2026-08-03T02:33:59.020Z"
+      "fechadoEm": "2026-08-03T17:01:52.678Z"
     }
   }
 }
