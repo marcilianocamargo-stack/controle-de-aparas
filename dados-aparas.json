@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-08-14T16:54:53.077Z",
+  "geradoEm": "2026-08-25T11:44:30.164Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -1381,6 +1381,61 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-08-14T16:54:45.220Z"
+      },
+      {
+        "id": "1787073383749_tlln7",
+        "data": "2026-08-17",
+        "tipo": "compra_bobina",
+        "peso": 33860,
+        "parceiro": "PIQUIRI INDUSTRIA E CIMERCIO DE PAPEIS LTDA.",
+        "nota": "27362",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-18T17:16:23.749Z"
+      },
+      {
+        "id": "1787336146322_zgt1x",
+        "data": "2026-08-21",
+        "tipo": "venda_chapa",
+        "peso": 3865,
+        "parceiro": "ANSELMO - IND E COMERCIO DE EMBALAGEM LTDA",
+        "nota": "27345",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-21T18:15:46.322Z"
+      },
+      {
+        "id": "1787658077256_we53x",
+        "data": "2026-08-21",
+        "tipo": "compra_bobina",
+        "peso": 22680,
+        "parceiro": "PIQUIRI INDUSTRIA COMERCIO DE PAPEIS LTDA.",
+        "nota": "27392",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-25T11:41:17.256Z"
+      },
+      {
+        "id": "1787658175428_y2jo2",
+        "data": "2026-08-21",
+        "tipo": "compra_bobina",
+        "peso": 32414,
+        "parceiro": "NOVACKI PAPEL E EMBALAGENS SIA • ' MP1",
+        "nota": "79283",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-25T11:42:55.428Z"
+      },
+      {
+        "id": "1787658255092_ajfy0",
+        "data": "2026-08-24",
+        "tipo": "compra_bobina",
+        "peso": 25110,
+        "parceiro": "PIQUIRI INDUSTRIA COMERCIO DE PAPEIS LTDA.",
+        "nota": "27415",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-08-25T11:44:15.092Z"
       }
     ],
     "2026-01": []
@@ -1391,6 +1446,12 @@
       "estoqueFinal": 70572,
       "meta": 8,
       "fechadoEm": "2026-08-03T17:01:52.678Z"
+    },
+    "2026-08": {
+      "estoqueInicial": 70572,
+      "estoqueFinal": null,
+      "meta": 8,
+      "fechadoEm": "2026-08-25T11:44:24.262Z"
     }
   }
 }
