@@ -170,6 +170,8 @@ select:focus, input:focus {
 .entry-info { font-size: 12.5px; color: #667; margin-top: 3px; }
 .entry-peso { font-weight: 800; font-size: 15px; white-space: nowrap; }
 .entry-del { background: none; border: none; color: #c0392b; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+.entry.dup { border-color: #e0a0a0; background: #fff5f5; }
+.entry-dup-aviso { font-size: 12px; color: #c0392b; font-weight: 800; margin-top: 3px; }
 
 .balanco-row {
   display: flex;
@@ -328,6 +330,7 @@ textarea {
 
         <label class="lbl">Nº da nota (opcional)</label>
         <input type="text" id="fNota" placeholder="Nº NF-e">
+        <div id="fNotaAviso" class="hint hidden" style="color:#c0392b;font-weight:700"></div>
 
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:#444;font-weight:700;cursor:pointer">
           <input type="checkbox" id="fDevolucao" style="width:20px;height:20px">
@@ -479,6 +482,26 @@ function toast(msg) {
 
 const TIPO_LABEL = { compra_bobina: 'Compra de bobina', venda_chapa: 'Venda de chapa', venda_apara: 'Venda de aparas', venda_papel_ondulado: 'Papel Ondulado' };
 
+/* Normaliza nº de nota pra comparar duplicidade: fica só com os dígitos e tira
+   os zeros à esquerda (ex.: "000.027.374" e "27374" contam como a mesma nota). */
+function normalizarNota(nota) {
+  return String(nota || '').replace(/\D/g, '').replace(/^0+/, '');
+}
+
+function obterTodosLancamentos() {
+  const all = lerLS(LS_LANC);
+  const out = [];
+  Object.keys(all).forEach(mes => (all[mes] || []).forEach(it => out.push(it)));
+  return out;
+}
+
+/* Acha outro lançamento já confirmado com a mesma nota (ignorando zeros à
+   esquerda), pra avisar antes de lançar a mesma nota fiscal 2 vezes. */
+function buscarNotaDuplicada(notaNormalizada, excludeId) {
+  if (!notaNormalizada) return null;
+  return obterTodosLancamentos().find(it => it.id !== excludeId && normalizarNota(it.nota) === notaNormalizada) || null;
+}
+
 /* Tenta fazer JSON.parse tolerando lixo em volta (texto solto, cerca ```json … ```
    que o NotebookLM costuma devolver junto) — mesma lógica usada no app da onduladeira. */
 function parseJSONTolerante(texto) {
@@ -560,18 +583,23 @@ function renderLista() {
     lista.innerHTML = '<div class="empty">Nenhum lançamento neste mês ainda.</div>';
     return;
   }
-  lista.innerHTML = itens.map(it => `
-    <div class="entry">
+  lista.innerHTML = itens.map(it => {
+    const notaNorm = normalizarNota(it.nota);
+    const dup = notaNorm ? buscarNotaDuplicada(notaNorm, it.id) : null;
+    return `
+    <div class="entry ${dup ? 'dup' : ''}">
       <div>
         <div class="entry-tipo ${it.tipo}">${TIPO_LABEL[it.tipo]} ${it.devolucao ? '<span class="badge badge-warn">↩️ devolução</span>' : ''}</div>
         <div class="entry-info">${fmtDataBR(it.data)} · ${it.parceiro || 'sem nome'} ${it.nota ? '· NF ' + it.nota : ''} ${it.origem === 'pdf' ? '· 📎' : ''}</div>
+        ${dup ? `<div class="entry-dup-aviso">⚠️ NF repetida — mesma nota em ${fmtDataBR(dup.data)}${dup.parceiro ? ' · ' + dup.parceiro : ''}</div>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <div class="entry-peso">${it.devolucao ? '−' : ''}${fmt(it.peso)} kg</div>
         <button class="entry-del" data-id="${it.id}" title="Excluir">✕</button>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
   lista.querySelectorAll('.entry-del').forEach(b => b.addEventListener('click', () => {
     if (!confirm('Excluir este lançamento?')) return;
     const arr = getLancamentos(mesLancarAtivo).filter(x => x.id !== b.dataset.id);
@@ -589,7 +617,28 @@ function limparForm() {
   document.getElementById('fDevolucao').checked = false;
   editandoId = null;
   document.getElementById('btnCancelarEdicao').classList.add('hidden');
+  checarNotaDuplicadaForm();
 }
+
+/* Avisa em vermelho, ainda enquanto digita, se o nº de nota já foi lançado
+   antes (comparando sem os zeros à esquerda — ver normalizarNota). */
+function checarNotaDuplicadaForm() {
+  const input = document.getElementById('fNota');
+  const aviso = document.getElementById('fNotaAviso');
+  const notaNorm = normalizarNota(input.value);
+  const dup = notaNorm ? buscarNotaDuplicada(notaNorm, editandoId) : null;
+  if (dup) {
+    input.style.borderColor = '#c0392b';
+    input.style.background = '#fff8f8';
+    aviso.textContent = '⚠️ NF ' + notaNorm + ' já lançada em ' + fmtDataBR(dup.data) + (dup.parceiro ? ' · ' + dup.parceiro : '') + '. Confira antes de salvar de novo.';
+    aviso.classList.remove('hidden');
+  } else {
+    input.style.borderColor = '';
+    input.style.background = '';
+    aviso.classList.add('hidden');
+  }
+}
+document.getElementById('fNota').addEventListener('input', checarNotaDuplicadaForm);
 
 document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
   const data = document.getElementById('fData').value;
@@ -722,8 +771,13 @@ function renderFila() {
 
   document.getElementById('filaLista').innerHTML = fila.map(it => {
     const faltaAlgo = !it.peso || !it.tipo;
+    const notaNorm = normalizarNota(it.nota);
+    const dupConfirmada = notaNorm ? buscarNotaDuplicada(notaNorm, null) : null;
+    const dupNaFila = notaNorm ? fila.find(x => x.id !== it.id && normalizarNota(x.nota) === notaNorm) : null;
+    const dup = dupConfirmada || dupNaFila;
+    const alerta = faltaAlgo || dup;
     return `
-    <div class="fila-item" data-id="${it.id}" style="border:1.5px solid ${faltaAlgo ? '#f3c1c1' : '#e4edf7'};background:${faltaAlgo ? '#fff8f8' : '#fff'};border-radius:12px;padding:14px;margin-top:12px">
+    <div class="fila-item" data-id="${it.id}" style="border:1.5px solid ${alerta ? '#f3c1c1' : '#e4edf7'};background:${alerta ? '#fff8f8' : '#fff'};border-radius:12px;padding:14px;margin-top:12px">
       <div style="font-weight:800;font-size:13px;color:#1a56a0;margin-bottom:8px;word-break:break-all">📎 ${it.arquivo}</div>
 
       <div class="grid2">
@@ -754,6 +808,7 @@ function renderFila() {
       </label>
 
       ${faltaAlgo ? '<div class="hint" style="color:#c0392b;font-weight:700;margin-top:8px">⚠️ Não veio tudo no JSON — confira peso e tipo antes de confirmar.</div>' : ''}
+      ${dup ? `<div class="hint" style="color:#c0392b;font-weight:700;margin-top:8px">⚠️ NF ${notaNorm} já ${dupConfirmada ? 'lançada em ' + fmtDataBR(dupConfirmada.data) + (dupConfirmada.parceiro ? ' · ' + dupConfirmada.parceiro : '') : 'aparece em outro item desta fila'} — confira se não é duplicada antes de confirmar.</div>` : ''}
 
       <div class="grid2" style="margin-top:12px">
         <button class="btn btn-outline btn-sm fila-descartar" style="margin-top:0">Descartar</button>
