@@ -1302,6 +1302,37 @@ function criarRefsLancamentos(primeiraLinha, ultimaLinha) {
   };
 }
 
+/* Aba só com compra de bobina: fornecedor, quantidade e nº da nota de
+   cada compra do mês — separado do resto pra facilitar conferência. */
+function montarAbaCompraBobina(wb, lanc, refs) {
+  const ws = novaAba(wb, 'Compra de Bobina');
+  linhaTitulo(ws, 'Compra de Bobina — fornecedores', 4, COR.verde);
+
+  const itens = lanc.filter(x => x.tipo === 'compra_bobina');
+  if (!itens.length) {
+    ws.addRow(['Nenhuma compra de bobina no período.']);
+    ws.getColumn(1).width = 50;
+    return;
+  }
+
+  const total = itens.reduce((s, x) => s + pesoComSinal(x), 0);
+  linhaKpi(ws, 'Total comprado (líquido)', { f: refs.sumTipo('Compra de bobina'), v: Math.round(total) }, { destaque: true, cor: COR.verde, corFundo: COR.verdeClaro });
+  linhaKpi(ws, 'Nº de notas', { f: refs.countTipo('Compra de bobina'), v: itens.length }, { numFmt: false });
+  ws.addRow([]);
+
+  const itensOrdenados = itens.slice().sort((a, b) => a.data.localeCompare(b.data));
+  construirTabela(ws, ['Data', 'Fornecedor', 'Nº Nota', 'Peso (kg)', 'Devolução'],
+    itensOrdenados.map(x => [fmtDataBR(x.data), x.parceiro || '', x.nota || '', x.peso, x.devolucao ? 'Sim' : '']),
+    {
+      corCabecalho: COR.verde,
+      aoCriarLinha: (row, linha) => {
+        row.getCell(4).numFmt = FMT_KG;
+        row.getCell(4).alignment = { horizontal: 'right' };
+        if (linha[4] === 'Sim') row.getCell(5).font = { bold: true, size: 10.5, color: { argb: COR.alerta } };
+      }
+    });
+}
+
 function montarAbaDashboardTipo(wb, lanc, tipo, nomeAba, titulo, refs) {
   const cor = corDoTipo(tipo);
   const corFundo = cor === COR.verde ? COR.verdeClaro : COR.azulClaro;
@@ -1436,6 +1467,8 @@ document.getElementById('btnExportarXlsx').addEventListener('click', async () =>
   const primeiraLinhaDet = headerDet.number + 1;
   const ultimaLinhaDet = primeiraLinhaDet + Math.max(lanc.length, 1) - 1;
   const refs = criarRefsLancamentos(primeiraLinhaDet, ultimaLinhaDet);
+
+  montarAbaCompraBobina(wb, lanc, refs);
 
   const wsTotais = novaAba(wb, 'Totais por Tipo');
   linhaTitulo(wsTotais, 'Totais por tipo — ' + nomeMes(mes), 2, COR.azul);
