@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-01T15:05:20.585Z",
+  "geradoEm": "2026-09-01T19:28:56.624Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -2023,39 +2023,6 @@
         "criadoEm": "2026-08-14T14:46:56.726Z"
       },
       {
-        "id": "1788272230249_d7mlz",
-        "data": "2026-08-31",
-        "tipo": "venda_chapa",
-        "peso": 9556,
-        "parceiro": "Notas Roberto",
-        "nota": "00000",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-09-01T14:17:10.249Z"
-      },
-      {
-        "id": "1788272325027_nft90",
-        "data": "2026-08-31",
-        "tipo": "venda_papel_ondulado",
-        "peso": 5470,
-        "parceiro": "Notas Roberto",
-        "nota": "00000",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-09-01T14:18:45.027Z"
-      },
-      {
-        "id": "1788272852955_1lj7r",
-        "data": "2026-08-31",
-        "tipo": "compra_bobina",
-        "peso": 13990,
-        "parceiro": "NOTAS PIQUIRI",
-        "nota": "00000",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-09-01T14:27:32.955Z"
-      },
-      {
         "id": "1788273142239_3v16u",
         "data": "2026-08-31",
         "tipo": "venda_apara",
@@ -2078,28 +2045,6 @@
         "criadoEm": "2026-09-01T14:46:58.517Z"
       },
       {
-        "id": "1788274577925_p40nh",
-        "data": "2026-08-01",
-        "tipo": "compra_bobina",
-        "peso": 15564,
-        "parceiro": "INDUSTRIA DE PAPEIS SUDESTE LTDA",
-        "nota": "167373",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-09-01T14:56:17.925Z"
-      },
-      {
-        "id": "1788274723041_hg6ot",
-        "data": "2026-08-01",
-        "tipo": "compra_bobina",
-        "peso": 2444,
-        "parceiro": "INDUSTRIA DE PAPEIS SUDESTE LTDA.",
-        "nota": "167374",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-09-01T14:58:43.041Z"
-      },
-      {
         "id": "1788275063079_hc51n",
         "data": "2026-08-10",
         "tipo": "compra_bobina",
@@ -2109,6 +2054,50 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-09-01T15:04:23.079Z"
+      },
+      {
+        "id": "1788281205234_y1riu",
+        "data": "2026-08-03",
+        "tipo": "compra_bobina",
+        "peso": 68540,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA.",
+        "nota": "27281",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T16:46:45.234Z"
+      },
+      {
+        "id": "1788281276321_40mzg",
+        "data": "2026-08-12",
+        "tipo": "compra_bobina",
+        "peso": 32740,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27330",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T16:47:56.321Z"
+      },
+      {
+        "id": "1788288181675_rml0o",
+        "data": "2026-08-31",
+        "tipo": "venda_papel_ondulado",
+        "peso": 2800,
+        "parceiro": "NOTAS IRENE",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T18:43:01.675Z"
+      },
+      {
+        "id": "1788288345509_94h7n",
+        "data": "2026-08-31",
+        "tipo": "venda_chapa",
+        "peso": 8578,
+        "parceiro": "NOTAS IRENE",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T18:45:45.509Z"
       }
     ],
     "2026-01": [],
@@ -2123,9 +2112,9 @@
     },
     "2026-08": {
       "estoqueInicial": 70572,
-      "estoqueFinal": 107283,
+      "estoqueFinal": 110783,
       "meta": 8,
-      "fechadoEm": "2026-09-01T14:22:00.249Z"
+      "fechadoEm": "2026-09-01T19:03:03.412Z"
     }
   }
 }
