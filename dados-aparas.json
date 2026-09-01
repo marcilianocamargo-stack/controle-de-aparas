@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-01T12:58:11.854Z",
+  "geradoEm": "2026-09-01T14:27:56.327Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -2021,9 +2021,43 @@
         "origem": "pdf",
         "arquivo": "colado",
         "criadoEm": "2026-08-14T14:46:56.726Z"
+      },
+      {
+        "id": "1788272230249_d7mlz",
+        "data": "2026-08-31",
+        "tipo": "venda_chapa",
+        "peso": 9556,
+        "parceiro": "Notas Roberto",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T14:17:10.249Z"
+      },
+      {
+        "id": "1788272325027_nft90",
+        "data": "2026-08-31",
+        "tipo": "venda_papel_ondulado",
+        "peso": 5470,
+        "parceiro": "Notas Roberto",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T14:18:45.027Z"
+      },
+      {
+        "id": "1788272852955_1lj7r",
+        "data": "2026-08-31",
+        "tipo": "compra_bobina",
+        "peso": 13990,
+        "parceiro": "NOTAS PIQUIRI",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T14:27:32.955Z"
       }
     ],
-    "2026-01": []
+    "2026-01": [],
+    "2026-09": []
   },
   "fechamentos": {
     "2026-07": {
@@ -2034,9 +2068,9 @@
     },
     "2026-08": {
       "estoqueInicial": 70572,
-      "estoqueFinal": null,
+      "estoqueFinal": 107283,
       "meta": 8,
-      "fechadoEm": "2026-08-25T11:44:24.262Z"
+      "fechadoEm": "2026-09-01T14:22:00.249Z"
     }
   }
 }
