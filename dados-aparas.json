@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-01T14:27:56.327Z",
+  "geradoEm": "2026-09-01T14:47:16.558Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -2054,6 +2054,28 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-09-01T14:27:32.955Z"
+      },
+      {
+        "id": "1788273142239_3v16u",
+        "data": "2026-08-31",
+        "tipo": "venda_apara",
+        "peso": 13900,
+        "parceiro": "PRIME ONDULADOS",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T14:32:22.239Z"
+      },
+      {
+        "id": "1788274018517_cgicr",
+        "data": "2026-08-31",
+        "tipo": "venda_apara",
+        "peso": 7200,
+        "parceiro": "NÃO FOI AINDA",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T14:46:58.517Z"
       }
     ],
     "2026-01": [],
