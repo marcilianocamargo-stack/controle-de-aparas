@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-01T12:26:25.094Z",
+  "geradoEm": "2026-09-01T12:58:11.854Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -999,18 +999,6 @@
         "criadoEm": "2026-08-14T14:46:44.582Z"
       },
       {
-        "id": "1786718816726_o45oql",
-        "data": "2026-08-03",
-        "tipo": "venda_chapa",
-        "peso": 4520,
-        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
-        "nota": "27277",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-08-14T14:46:56.726Z"
-      },
-      {
         "id": "1786718829490_jd79ng",
         "data": "2026-08-03",
         "tipo": "venda_chapa",
@@ -1507,18 +1495,6 @@
         "criadoEm": "2026-09-01T11:46:00.876Z"
       },
       {
-        "id": "1788263161508_c1r2ih",
-        "data": "2026-08-28",
-        "tipo": "venda_chapa",
-        "peso": 4758,
-        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
-        "nota": "27452",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-09-01T11:46:01.508Z"
-      },
-      {
         "id": "1788263579409_zzodzz",
         "data": "2026-08-30",
         "tipo": "venda_chapa",
@@ -1577,18 +1553,6 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-09-01T12:01:15.021Z"
-      },
-      {
-        "id": "1788264076822_iy6rqo",
-        "data": "2026-08-26",
-        "tipo": "venda_chapa",
-        "peso": 5234,
-        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
-        "nota": "27428",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-09-01T12:01:16.822Z"
       },
       {
         "id": "1788264078598_cde9xe",
@@ -1975,18 +1939,6 @@
         "criadoEm": "2026-09-01T12:22:56.691Z"
       },
       {
-        "id": "1788265377139_wlbabg",
-        "data": "2026-08-16",
-        "tipo": "venda_chapa",
-        "peso": 4750,
-        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
-        "nota": "27360",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-09-01T12:22:57.139Z"
-      },
-      {
         "id": "1788265377619_yzzt8x",
         "data": "2026-08-16",
         "tipo": "venda_chapa",
@@ -2021,6 +1973,54 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-09-01T12:22:59.111Z"
+      },
+      {
+        "id": "1788263161508_c1r2ih",
+        "data": "2026-08-28",
+        "tipo": "venda_papel_ondulado",
+        "peso": 4758,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27452",
+        "devolucao": false,
+        "origem": "pdf",
+        "arquivo": "colado",
+        "criadoEm": "2026-09-01T11:46:01.508Z"
+      },
+      {
+        "id": "1788264076822_iy6rqo",
+        "data": "2026-08-26",
+        "tipo": "venda_papel_ondulado",
+        "peso": 5234,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27428",
+        "devolucao": false,
+        "origem": "pdf",
+        "arquivo": "colado",
+        "criadoEm": "2026-09-01T12:01:16.822Z"
+      },
+      {
+        "id": "1788265377139_wlbabg",
+        "data": "2026-08-16",
+        "tipo": "venda_papel_ondulado",
+        "peso": 4750,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27360",
+        "devolucao": false,
+        "origem": "pdf",
+        "arquivo": "colado",
+        "criadoEm": "2026-09-01T12:22:57.139Z"
+      },
+      {
+        "id": "1786718816726_o45oql",
+        "data": "2026-08-03",
+        "tipo": "venda_papel_ondulado",
+        "peso": 4520,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27277",
+        "devolucao": false,
+        "origem": "pdf",
+        "arquivo": "colado",
+        "criadoEm": "2026-08-14T14:46:56.726Z"
       }
     ],
     "2026-01": []
