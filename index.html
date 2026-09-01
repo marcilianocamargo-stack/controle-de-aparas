@@ -270,7 +270,10 @@ textarea {
   <div id="tab-lancar" class="tab-content hidden">
 
     <div class="card">
-      <div class="card-title">📋 Lançamentos de <span id="mesLancarLabel"></span></div>
+      <div class="card-title" style="justify-content:space-between">
+        <span>📋 Lançamentos</span>
+        <select id="mesLancar" style="width:auto;margin-top:0;padding:8px 12px;font-size:14px"></select>
+      </div>
       <div id="listaLancamentos"></div>
     </div>
 
@@ -577,8 +580,30 @@ let editandoMesOriginal = null;
 
 document.getElementById('fData').value = hojeISO();
 
+/* Monta o seletor de mês da aba Lançar com os últimos 12 meses + qualquer
+   mês que já tenha lançamento salvo, pra sempre dar pra achar o mês ativo
+   mesmo que seja mais antigo que 12 meses atrás. */
+function preencherSeletorMesLancar() {
+  const sel = document.getElementById('mesLancar');
+  const atual = new Date();
+  const chaves = new Set();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(atual.getFullYear(), atual.getMonth() - i, 1);
+    chaves.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+  }
+  Object.keys(lerLS(LS_LANC)).forEach(m => chaves.add(m));
+  chaves.add(mesLancarAtivo);
+  const ordenadas = Array.from(chaves).sort().reverse();
+  sel.innerHTML = ordenadas.map(m => `<option value="${m}">${nomeMes(m)}</option>`).join('');
+  sel.value = mesLancarAtivo;
+}
+document.getElementById('mesLancar').addEventListener('change', (e) => {
+  mesLancarAtivo = e.target.value;
+  renderLista();
+});
+
 function renderLista() {
-  document.getElementById('mesLancarLabel').textContent = nomeMes(mesLancarAtivo);
+  preencherSeletorMesLancar();
   const lista = document.getElementById('listaLancamentos');
   const itens = getLancamentos(mesLancarAtivo).slice().sort((a, b) => b.data.localeCompare(a.data));
   if (itens.length === 0) {
