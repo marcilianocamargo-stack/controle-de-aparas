@@ -173,6 +173,7 @@ select:focus, input:focus {
 .entry-edit { background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px 8px; }
 .entry.dup { border-color: #e0a0a0; background: #fff5f5; }
 .entry-dup-aviso { font-size: 12px; color: #c0392b; font-weight: 800; margin-top: 3px; }
+.entry-edit-form { border: 1.5px solid #1a56a0; border-radius: 12px; padding: 14px; margin-top: 10px; background: #f4f8ff; }
 
 .balanco-row {
   display: flex;
@@ -342,7 +343,6 @@ textarea {
         </label>
 
         <button class="btn btn-primary" id="btnSalvarLancamento">Salvar lançamento</button>
-        <button class="btn btn-ghost hidden" id="btnCancelarEdicao">Cancelar</button>
       </div>
 
       <button class="btn btn-ghost" id="btnSairSupervisor">🔒 Sair da área do supervisor</button>
@@ -575,8 +575,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 /* ===================== LANÇAR ===================== */
 let mesLancarAtivo = mesAtual();
-let editandoId = null;
-let editandoMesOriginal = null;
+let editandoInlineId = null;
 
 document.getElementById('fData').value = hojeISO();
 
@@ -611,6 +610,7 @@ function renderLista() {
     return;
   }
   lista.innerHTML = itens.map(it => {
+    if (it.id === editandoInlineId) return templateEdicaoInline(it);
     const notaNorm = normalizarNota(it.nota);
     const dup = notaNorm ? buscarNotaDuplicada(notaNorm, it.id) : null;
     return `
@@ -629,7 +629,7 @@ function renderLista() {
   `;
   }).join('');
   lista.querySelectorAll('.entry-edit').forEach(b => b.addEventListener('click', () => {
-    iniciarEdicaoLancamento(b.dataset.id);
+    abrirEdicaoInline(b.dataset.id);
   }));
   lista.querySelectorAll('.entry-del').forEach(b => b.addEventListener('click', () => {
     if (!confirm('Excluir este lançamento?')) return;
@@ -637,31 +637,98 @@ function renderLista() {
     salvarLancamentos(mesLancarAtivo, arr);
     renderLista();
   }));
+  lista.querySelectorAll('.entry-edit-salvar').forEach(b => b.addEventListener('click', () => {
+    salvarEdicaoInline(b.dataset.id);
+  }));
+  lista.querySelectorAll('.entry-edit-cancelar').forEach(b => b.addEventListener('click', () => {
+    editandoInlineId = null;
+    renderLista();
+  }));
 }
 
-/* Carrega um lançamento já salvo de volta no formulário manual pra corrigir
-   qualquer campo (ex.: cadastrou como "chapa" mas era "papel ondulado"). */
-function iniciarEdicaoLancamento(id) {
-  const it = getLancamentos(mesLancarAtivo).find(x => x.id === id);
-  if (!it) return;
+/* Formulário de edição que abre no lugar do próprio cartão do lançamento —
+   pra corrigir tipo/peso/etc sem sair da posição da lista (mês inteiro tem
+   muita nota, ninguém quer ficar subindo e descendo a página a cada uma). */
+function templateEdicaoInline(it) {
+  return `
+    <div class="entry-edit-form" data-id="${it.id}">
+      <div class="grid2">
+        <div><label class="lbl" style="margin-top:0">Data</label><input type="date" class="ed-data" value="${it.data}"></div>
+        <div><label class="lbl" style="margin-top:0">Tipo</label>
+          <select class="ed-tipo">
+            <option value="compra_bobina" ${it.tipo === 'compra_bobina' ? 'selected' : ''}>Compra de bobina</option>
+            <option value="venda_chapa" ${it.tipo === 'venda_chapa' ? 'selected' : ''}>Venda de chapa</option>
+            <option value="venda_apara" ${it.tipo === 'venda_apara' ? 'selected' : ''}>Venda de aparas</option>
+            <option value="venda_papel_ondulado" ${it.tipo === 'venda_papel_ondulado' ? 'selected' : ''}>Papel Ondulado</option>
+          </select>
+        </div>
+      </div>
+      <label class="lbl">Peso (kg)</label>
+      <input type="number" class="ed-peso" inputmode="decimal" value="${it.peso}">
+      <label class="lbl">Fornecedor / Cliente</label>
+      <input type="text" class="ed-parceiro" value="${(it.parceiro || '').replace(/"/g, '&quot;')}">
+      <label class="lbl">Nº da nota</label>
+      <input type="text" class="ed-nota" value="${(it.nota || '').replace(/"/g, '&quot;')}">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13.5px;color:#444;font-weight:700;cursor:pointer">
+        <input type="checkbox" class="ed-devolucao" ${it.devolucao ? 'checked' : ''} style="width:18px;height:18px">
+        ↩️ Devolução (desconta em vez de somar)
+      </label>
+      <div class="grid2" style="margin-top:12px">
+        <button class="btn btn-outline btn-sm entry-edit-cancelar" style="margin-top:0">Cancelar</button>
+        <button class="btn btn-primary btn-sm entry-edit-salvar" data-id="${it.id}" style="margin-top:0">✔ Salvar</button>
+      </div>
+    </div>
+  `;
+}
+
+function abrirEdicaoInline(id) {
   if (document.getElementById('areaSupervisor').classList.contains('hidden')) {
     toast('Entre com a senha do supervisor pra editar');
     document.getElementById('cardSupervisorLock').scrollIntoView({ behavior: 'smooth', block: 'center' });
     document.getElementById('supervisorSenha').focus();
     return;
   }
-  document.getElementById('fData').value = it.data;
-  document.getElementById('fTipo').value = it.tipo;
-  document.getElementById('fPeso').value = it.peso;
-  document.getElementById('fParceiro').value = it.parceiro || '';
-  document.getElementById('fNota').value = it.nota || '';
-  document.getElementById('fDevolucao').checked = !!it.devolucao;
-  editandoId = it.id;
-  editandoMesOriginal = mesLancarAtivo;
-  document.getElementById('btnCancelarEdicao').classList.remove('hidden');
-  document.getElementById('btnSalvarLancamento').textContent = 'Salvar alteração';
-  checarNotaDuplicadaForm();
-  document.getElementById('fTipo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  editandoInlineId = id;
+  renderLista();
+}
+
+function salvarEdicaoInline(id) {
+  const el = document.querySelector('.entry-edit-form[data-id="' + id + '"]');
+  if (!el) return;
+  const data = el.querySelector('.ed-data').value;
+  const peso = parseFloat(el.querySelector('.ed-peso').value);
+  if (!data) { toast('Informe a data'); return; }
+  if (!peso || peso <= 0) { toast('Informe o peso'); return; }
+
+  const mesOriginal = mesLancarAtivo;
+  const original = getLancamentos(mesOriginal).find(x => x.id === id);
+  const entry = {
+    id,
+    data,
+    tipo: el.querySelector('.ed-tipo').value,
+    peso,
+    parceiro: el.querySelector('.ed-parceiro').value.trim(),
+    nota: el.querySelector('.ed-nota').value.trim(),
+    devolucao: el.querySelector('.ed-devolucao').checked,
+    origem: original ? original.origem : 'manual',
+    arquivo: original ? original.arquivo : undefined,
+    criadoEm: original ? original.criadoEm : new Date().toISOString()
+  };
+
+  const mesNovo = chaveMes(data);
+  const arrNovo = getLancamentos(mesNovo).filter(x => x.id !== id);
+  arrNovo.push(entry);
+  salvarLancamentos(mesNovo, arrNovo);
+
+  if (mesNovo !== mesOriginal) {
+    const arrOriginal = getLancamentos(mesOriginal).filter(x => x.id !== id);
+    salvarLancamentos(mesOriginal, arrOriginal);
+    mesLancarAtivo = mesNovo;
+  }
+
+  editandoInlineId = null;
+  renderLista();
+  toast('Lançamento atualizado');
 }
 
 function limparForm() {
@@ -671,10 +738,6 @@ function limparForm() {
   document.getElementById('fParceiro').value = '';
   document.getElementById('fNota').value = '';
   document.getElementById('fDevolucao').checked = false;
-  editandoId = null;
-  editandoMesOriginal = null;
-  document.getElementById('btnCancelarEdicao').classList.add('hidden');
-  document.getElementById('btnSalvarLancamento').textContent = 'Salvar lançamento';
   checarNotaDuplicadaForm();
 }
 
@@ -684,7 +747,7 @@ function checarNotaDuplicadaForm() {
   const input = document.getElementById('fNota');
   const aviso = document.getElementById('fNotaAviso');
   const notaNorm = normalizarNota(input.value);
-  const dup = notaNorm ? buscarNotaDuplicada(notaNorm, editandoId) : null;
+  const dup = notaNorm ? buscarNotaDuplicada(notaNorm, null) : null;
   if (dup) {
     input.style.borderColor = '#c0392b';
     input.style.background = '#fff8f8';
@@ -704,40 +767,28 @@ document.getElementById('btnSalvarLancamento').addEventListener('click', () => {
   if (!data) { toast('Informe a data'); return; }
   if (!peso || peso <= 0) { toast('Informe o peso'); return; }
 
-  const original = editandoId ? getLancamentos(editandoMesOriginal).find(x => x.id === editandoId) : null;
-
   const entry = {
-    id: editandoId || (Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+    id: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
     data,
     tipo: document.getElementById('fTipo').value,
     peso,
     parceiro: document.getElementById('fParceiro').value.trim(),
     nota: document.getElementById('fNota').value.trim(),
     devolucao: document.getElementById('fDevolucao').checked,
-    origem: original ? original.origem : 'manual',
-    arquivo: original ? original.arquivo : undefined,
-    criadoEm: original ? original.criadoEm : new Date().toISOString()
+    origem: 'manual',
+    criadoEm: new Date().toISOString()
   };
 
   const mes = chaveMes(data);
-  let arr = getLancamentos(mes);
-  if (editandoId) arr = arr.filter(x => x.id !== editandoId);
+  const arr = getLancamentos(mes);
   arr.push(entry);
   salvarLancamentos(mes, arr);
 
-  if (editandoId && editandoMesOriginal && editandoMesOriginal !== mes) {
-    const arrOriginal = getLancamentos(editandoMesOriginal).filter(x => x.id !== editandoId);
-    salvarLancamentos(editandoMesOriginal, arrOriginal);
-  }
-
-  const foiEdicao = !!editandoId;
   mesLancarAtivo = mes;
   limparForm();
   renderLista();
-  toast(foiEdicao ? 'Lançamento atualizado' : 'Lançamento salvo');
+  toast('Lançamento salvo');
 });
-
-document.getElementById('btnCancelarEdicao').addEventListener('click', limparForm);
 
 /* ===================== IMPORTAÇÃO OCR (NotebookLM) ===================== */
 document.getElementById('btnImportarOcr').addEventListener('click', () => document.getElementById('ocrInput').click());
