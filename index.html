@@ -1055,9 +1055,12 @@ function calcularBalanco(mes) {
   const estoqueFinal = fech.estoqueFinal != null ? fech.estoqueFinal : null;
 
   const perda = estoqueFinal != null ? teorico - estoqueFinal : null;
-  const percPerda = perda != null && subtotal > 0 ? (perda / subtotal) * 100 : null;
+  // % de perda é sobre o que foi USADO no mês (entrada - o que sobrou), não
+  // sobre o total disponível — senão estoque parado no pátio dilui a conta.
+  const usado = estoqueFinal != null ? subtotal - estoqueFinal : null;
+  const percPerda = perda != null && usado > 0 ? (perda / usado) * 100 : null;
 
-  return { entrada, saidaChapa, saidaApara, saidaPapelOndulado, estoqueInicial, estoqueInicialAuto, subtotal, teorico, estoqueFinal, perda, percPerda, meta: fech.meta != null ? fech.meta : 8 };
+  return { entrada, saidaChapa, saidaApara, saidaPapelOndulado, estoqueInicial, estoqueInicialAuto, subtotal, teorico, estoqueFinal, perda, usado, percPerda, meta: fech.meta != null ? fech.meta : 8 };
 }
 
 function atualizarFechamento() {
@@ -1463,7 +1466,9 @@ document.getElementById('btnExportarXlsx').addEventListener('click', async () =>
   const corPerdaRes = b.percPerda == null ? COR.texto : (b.percPerda <= b.meta ? COR.verde : COR.alerta);
   const perdaFormula = `IF(ISNUMBER(B${rl.estoqueFinal}),B${rl.teorico}-B${rl.estoqueFinal},"—")`;
   rl.perda = linhaKpi(wsRes, 'Perda (kg)', { f: perdaFormula, v: b.perda != null ? b.perda : '—' }, { cor: corPerdaRes, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro }).number;
-  const pctFormula = `IF(AND(ISNUMBER(B${rl.estoqueFinal}),B${rl.subtotal}<>0),TEXT((B${rl.perda}/B${rl.subtotal})*100,"0.00")&"%","—")`;
+  // % sobre o que foi USADO (subtotal - estoque final), não sobre o total
+  // disponível — senão estoque parado no pátio dilui a conta (ver calcularBalanco).
+  const pctFormula = `IF(AND(ISNUMBER(B${rl.estoqueFinal}),(B${rl.subtotal}-B${rl.estoqueFinal})<>0),TEXT((B${rl.perda}/(B${rl.subtotal}-B${rl.estoqueFinal}))*100,"0.00")&"%","—")`;
   rl.pct = linhaKpi(wsRes, '% Perda', { f: pctFormula, v: b.percPerda != null ? b.percPerda.toFixed(2) + '%' : '—' }, { numFmt: false, cor: corPerdaRes }).number;
   rl.meta = linhaKpi(wsRes, 'Meta (%)', b.meta, { numFmt: false }).number;
   wsRes.getColumn(1).width = 36;
