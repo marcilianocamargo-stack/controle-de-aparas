@@ -644,6 +644,12 @@ function renderLista() {
 function iniciarEdicaoLancamento(id) {
   const it = getLancamentos(mesLancarAtivo).find(x => x.id === id);
   if (!it) return;
+  if (document.getElementById('areaSupervisor').classList.contains('hidden')) {
+    toast('Entre com a senha do supervisor pra editar');
+    document.getElementById('cardSupervisorLock').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('supervisorSenha').focus();
+    return;
+  }
   document.getElementById('fData').value = it.data;
   document.getElementById('fTipo').value = it.tipo;
   document.getElementById('fPeso').value = it.peso;
