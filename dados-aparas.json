@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-01T14:47:16.558Z",
+  "geradoEm": "2026-09-01T15:05:20.585Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -2076,6 +2076,39 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-09-01T14:46:58.517Z"
+      },
+      {
+        "id": "1788274577925_p40nh",
+        "data": "2026-08-01",
+        "tipo": "compra_bobina",
+        "peso": 15564,
+        "parceiro": "INDUSTRIA DE PAPEIS SUDESTE LTDA",
+        "nota": "167373",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T14:56:17.925Z"
+      },
+      {
+        "id": "1788274723041_hg6ot",
+        "data": "2026-08-01",
+        "tipo": "compra_bobina",
+        "peso": 2444,
+        "parceiro": "INDUSTRIA DE PAPEIS SUDESTE LTDA.",
+        "nota": "167374",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T14:58:43.041Z"
+      },
+      {
+        "id": "1788275063079_hc51n",
+        "data": "2026-08-10",
+        "tipo": "compra_bobina",
+        "peso": 32228,
+        "parceiro": "PORTO INDUSTRIA DE PAPEL",
+        "nota": "6762",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-01T15:04:23.079Z"
       }
     ],
     "2026-01": [],
