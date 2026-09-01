@@ -1212,15 +1212,21 @@ function linhaSecao(ws, texto) {
   return row;
 }
 
+/* valor aceita um número/string fixo OU {f: 'fórmula do Excel', v: resultado já calculado}
+   pra a célula virar uma fórmula de verdade — recalcula sozinha se o dado de origem mudar. */
+function ehFormula(valor) { return valor != null && typeof valor === 'object' && 'f' in valor; }
+
 function linhaKpi(ws, label, valor, opts) {
   opts = opts || {};
-  const row = ws.addRow([label, valor]);
+  const row = ws.addRow([label, ehFormula(valor) ? undefined : valor]);
   row.getCell(1).font = { color: { argb: COR.textoSuave }, size: 10.5 };
   row.getCell(1).alignment = { vertical: 'middle' };
   const vCell = row.getCell(2);
+  if (ehFormula(valor)) vCell.value = { formula: valor.f, result: valor.v };
   vCell.font = { bold: true, size: 12, color: { argb: opts.cor || COR.texto } };
   vCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  if (typeof valor === 'number' && opts.numFmt !== false) vCell.numFmt = opts.numFmt || FMT_KG;
+  const numerico = ehFormula(valor) ? typeof valor.v === 'number' : typeof valor === 'number';
+  if (numerico && opts.numFmt !== false) vCell.numFmt = opts.numFmt || FMT_KG;
   if (opts.destaque) {
     [1, 2].forEach(c => {
       row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: opts.corFundo || COR.azulClaro } };
@@ -1233,18 +1239,21 @@ function linhaKpi(ws, label, valor, opts) {
 
 /* Sub-tabela de 2 colunas com barra de dados nativa do Excel (não é
    desenho, é o recurso de verdade — funciona igual quando aberto no
-   Excel/Google Sheets) escalada pelo maior valor do próprio bloco. */
+   Excel/Google Sheets) escalada pelo maior valor do próprio bloco.
+   Cada valor de linha aceita número fixo ou {f, v} (ver linhaKpi). */
 function tabelaComBarra(ws, titulo, cabecalho, linhas, corBarra) {
   linhaSecao(ws, titulo);
   const headerRow = ws.addRow(cabecalho);
   estilizarCabecalho(ws, headerRow.number, COR.azulEscuro);
   linhas.forEach(l => {
-    const row = ws.addRow(l);
+    const row = ws.addRow([l[0]]);
+    const vCell = row.getCell(2);
+    vCell.value = ehFormula(l[1]) ? { formula: l[1].f, result: l[1].v } : l[1];
     row.getCell(1).border = bordaFina();
     row.getCell(1).font = { size: 10.5, color: { argb: COR.texto } };
-    row.getCell(2).border = bordaFina();
-    row.getCell(2).font = { size: 10.5, bold: true, color: { argb: COR.texto } };
-    row.getCell(2).numFmt = FMT_KG;
+    vCell.border = bordaFina();
+    vCell.font = { size: 10.5, bold: true, color: { argb: COR.texto } };
+    vCell.numFmt = FMT_KG;
   });
   if (linhas.length) {
     const inicio = headerRow.number + 1;
@@ -1270,7 +1279,27 @@ async function baixarWorkbook(wb, nomeArquivo) {
   URL.revokeObjectURL(url);
 }
 
-function montarAbaDashboardTipo(wb, lanc, tipo, nomeAba, titulo) {
+/* Monta as referências de fórmula (SUMIF/COUNTIF/MAXIFS/MINIFS) que apontam
+   pra aba "Lançamentos" — todo total do workbook usa isso em vez de número
+   fixo, pra recalcular sozinho quando alguém edita um dado lá na origem. */
+function escapeFormulaTexto(s) { return String(s).replace(/"/g, '""'); }
+
+function criarRefsLancamentos(primeiraLinha, ultimaLinha) {
+  const col = (letra) => `'Lançamentos'!$${letra}$${primeiraLinha}:$${letra}$${ultimaLinha}`;
+  const tipo = col('B'), devolucao = col('C'), pesoBruto = col('D'), cliente = col('E'), data = col('A'), pesoSinal = col('I');
+  const txt = escapeFormulaTexto;
+  return {
+    sumTipo: (label) => `SUMIF(${tipo},"${txt(label)}",${pesoSinal})`,
+    countTipo: (label) => `COUNTIF(${tipo},"${txt(label)}")`,
+    maxTipo: (label) => `MAXIFS(${pesoBruto},${tipo},"${txt(label)}")`,
+    minTipo: (label) => `MINIFS(${pesoBruto},${tipo},"${txt(label)}")`,
+    sumTipoDevolucao: (label, ehDevolucao) => `SUMIFS(${pesoBruto},${tipo},"${txt(label)}",${devolucao},"${ehDevolucao ? 'Sim' : '<>Sim'}")`,
+    sumTipoCliente: (label, cliNome) => `SUMIFS(${pesoSinal},${tipo},"${txt(label)}",${cliente},"${cliNome === '(sem nome)' ? '' : txt(cliNome)}")`,
+    sumTipoDia: (label, diaLabel) => `SUMIFS(${pesoSinal},${tipo},"${txt(label)}",${data},"${txt(diaLabel)}")`
+  };
+}
+
+function montarAbaDashboardTipo(wb, lanc, tipo, nomeAba, titulo, refs) {
   const cor = corDoTipo(tipo);
   const corFundo = cor === COR.verde ? COR.verdeClaro : COR.azulClaro;
   const ws = novaAba(wb, nomeAba);
@@ -1283,43 +1312,49 @@ function montarAbaDashboardTipo(wb, lanc, tipo, nomeAba, titulo) {
     return;
   }
 
+  const tipoLabel = TIPO_LABEL[tipo];
   const total = itens.reduce((s, x) => s + pesoComSinal(x), 0);
   const pesos = itens.map(x => x.peso);
 
-  linhaKpi(ws, 'Total no período', Math.round(total), { destaque: true, cor, corFundo });
-  linhaKpi(ws, 'Nº de notas', itens.length, { numFmt: false });
-  linhaKpi(ws, 'Peso médio por nota', Math.round(total / itens.length));
-  linhaKpi(ws, 'Maior nota', Math.max(...pesos));
-  linhaKpi(ws, 'Menor nota', Math.min(...pesos));
+  linhaKpi(ws, 'Total no período', { f: refs.sumTipo(tipoLabel), v: Math.round(total) }, { destaque: true, cor, corFundo });
+  linhaKpi(ws, 'Nº de notas', { f: refs.countTipo(tipoLabel), v: itens.length }, { numFmt: false });
+  linhaKpi(ws, 'Peso médio por nota', { f: `ROUND(${refs.sumTipo(tipoLabel)}/${refs.countTipo(tipoLabel)},0)`, v: Math.round(total / itens.length) });
+  linhaKpi(ws, 'Maior nota', { f: refs.maxTipo(tipoLabel), v: Math.max(...pesos) });
+  linhaKpi(ws, 'Menor nota', { f: refs.minTipo(tipoLabel), v: Math.min(...pesos) });
   ws.addRow([]);
 
   const porCliente = {};
   itens.forEach(x => { const nome = x.parceiro || '(sem nome)'; porCliente[nome] = (porCliente[nome] || 0) + pesoComSinal(x); });
-  const clientesOrdenados = Object.entries(porCliente).sort((a, b) => b[1] - a[1]).map(([n, kg]) => [n, Math.round(kg)]);
+  const clientesOrdenados = Object.entries(porCliente).sort((a, b) => b[1] - a[1])
+    .map(([n, kg]) => [n, { f: refs.sumTipoCliente(tipoLabel, n), v: Math.round(kg) }]);
   tabelaComBarra(ws, 'Por cliente / fornecedor', ['Cliente/Fornecedor', 'kg'], clientesOrdenados, cor);
 
   const porDia = {};
   itens.forEach(x => { porDia[x.data] = (porDia[x.data] || 0) + pesoComSinal(x); });
-  const diasOrdenados = Object.keys(porDia).sort().map(d => [fmtDataBR(d), Math.round(porDia[d])]);
+  const diasOrdenados = Object.keys(porDia).sort()
+    .map(d => [fmtDataBR(d), { f: refs.sumTipoDia(tipoLabel, fmtDataBR(d)), v: Math.round(porDia[d]) }]);
   tabelaComBarra(ws, 'Evolução por dia', ['Dia', 'kg'], diasOrdenados, cor);
 }
 
-function montarAbaDashboardGeral(wb, mes, lanc, b) {
+/* rl = mapa {campo: número da linha} da aba Resumo — aqui só referenciamos
+   essas células (='Resumo'!B7) em vez de recalcular tudo de novo. */
+function montarAbaDashboardGeral(wb, mes, lanc, b, rl, refs) {
   const ws = novaAba(wb, 'Dashboard Geral');
   linhaTitulo(ws, 'Visão geral — ' + nomeMes(mes), 2, COR.azul);
+  const ref = (campo) => `'Resumo'!B${rl[campo]}`;
 
   linhaSecao(ws, 'Balanço do mês');
-  linhaKpi(ws, 'Estoque inicial', Math.round(b.estoqueInicial));
-  linhaKpi(ws, '+ Entrada de bobina', Math.round(b.entrada), { cor: COR.verde });
-  linhaKpi(ws, 'Estoque inicial + entrada', Math.round(b.subtotal));
-  linhaKpi(ws, '- Saída em chapa', Math.round(b.saidaChapa));
-  linhaKpi(ws, '- Saída em papel ondulado', Math.round(b.saidaPapelOndulado));
-  linhaKpi(ws, 'Estoque teórico final', Math.round(b.teorico));
-  linhaKpi(ws, 'Vendido como apara', Math.round(b.saidaApara));
-  linhaKpi(ws, 'Estoque final informado', b.estoqueFinal != null ? Math.round(b.estoqueFinal) : '—');
+  linhaKpi(ws, 'Estoque inicial', { f: ref('estoqueInicial'), v: Math.round(b.estoqueInicial) });
+  linhaKpi(ws, '+ Entrada de bobina', { f: ref('entrada'), v: Math.round(b.entrada) }, { cor: COR.verde });
+  linhaKpi(ws, 'Estoque inicial + entrada', { f: ref('subtotal'), v: Math.round(b.subtotal) });
+  linhaKpi(ws, '- Saída em chapa', { f: ref('saidaChapa'), v: Math.round(b.saidaChapa) });
+  linhaKpi(ws, '- Saída em papel ondulado', { f: ref('saidaOndulado'), v: Math.round(b.saidaPapelOndulado) });
+  linhaKpi(ws, 'Estoque teórico final', { f: ref('teorico'), v: Math.round(b.teorico) });
+  linhaKpi(ws, 'Vendido como apara', { f: ref('apara'), v: Math.round(b.saidaApara) });
+  linhaKpi(ws, 'Estoque final informado', { f: ref('estoqueFinal'), v: b.estoqueFinal != null ? Math.round(b.estoqueFinal) : '—' });
   const corPerda = b.percPerda == null ? COR.texto : (b.percPerda <= b.meta ? COR.verde : COR.alerta);
-  linhaKpi(ws, 'Perda', b.perda != null ? Math.round(b.perda) : '—', { cor: corPerda, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro });
-  linhaKpi(ws, '% Perda (meta ' + b.meta + '%)', b.percPerda != null ? b.percPerda.toFixed(1) + '%' : '—', { numFmt: false, cor: corPerda });
+  linhaKpi(ws, 'Perda', { f: ref('perda'), v: b.perda != null ? Math.round(b.perda) : '—' }, { cor: corPerda, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro });
+  linhaKpi(ws, '% Perda (meta ' + b.meta + '%)', { f: ref('pct'), v: b.percPerda != null ? b.percPerda.toFixed(1) + '%' : '—' }, { numFmt: false, cor: corPerda });
   ws.addRow([]);
 
   linhaSecao(ws, 'Comparativo por tipo');
@@ -1327,13 +1362,20 @@ function montarAbaDashboardGeral(wb, mes, lanc, b) {
   estilizarCabecalho(ws, headerRow.number, COR.azulEscuro);
 
   const bobinaLiquida = lanc.filter(x => x.tipo === 'compra_bobina').reduce((s, x) => s + pesoComSinal(x), 0);
-  const rowBobina = ws.addRow(['Compra de bobina (líquida)', Math.round(bobinaLiquida)]);
+  const rowBobina = ws.addRow(['Compra de bobina (líquida)']);
+  rowBobina.getCell(2).value = { formula: refs.sumTipo('Compra de bobina'), result: Math.round(bobinaLiquida) };
+
   const vendas = [
-    ['Venda de chapa', 'venda_chapa'],
-    ['Papel Ondulado', 'venda_papel_ondulado'],
-    ['Venda de aparas', 'venda_apara']
-  ].map(([label, tipo]) => [label, Math.round(lanc.filter(x => x.tipo === tipo).reduce((s, x) => s + pesoComSinal(x), 0))]);
-  const linhasVendas = vendas.map(v => ws.addRow(v));
+    ['Venda de chapa', 'venda_chapa', 'Venda de chapa'],
+    ['Papel Ondulado', 'venda_papel_ondulado', 'Papel Ondulado'],
+    ['Venda de aparas', 'venda_apara', 'Venda de aparas']
+  ];
+  const linhasVendas = vendas.map(([label, tipoKey, tipoLabelExcel]) => {
+    const valor = Math.round(lanc.filter(x => x.tipo === tipoKey).reduce((s, x) => s + pesoComSinal(x), 0));
+    const row = ws.addRow([label]);
+    row.getCell(2).value = { formula: refs.sumTipo(tipoLabelExcel), result: valor };
+    return row;
+  });
 
   [rowBobina, ...linhasVendas].forEach(row => {
     row.getCell(1).border = bordaFina();
@@ -1368,7 +1410,8 @@ document.getElementById('btnExportarXlsx').addEventListener('click', async () =>
   wb.created = new Date();
 
   const wsDet = novaAba(wb, 'Lançamentos', { freezeHeader: true });
-  construirTabela(wsDet, ['Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Fornecedor/Cliente', 'Nº Nota', 'Arquivo', 'Origem'],
+  const headerDet = construirTabela(wsDet,
+    ['Data', 'Tipo', 'Devolução', 'Peso (kg)', 'Fornecedor/Cliente', 'Nº Nota', 'Arquivo', 'Origem', 'Peso c/ sinal (kg)'],
     lanc.map(x => [fmtDataBR(x.data), TIPO_LABEL[x.tipo], x.devolucao ? 'Sim' : '', x.peso, x.parceiro || '', x.nota || '', x.arquivo || '', x.origem]),
     {
       aoCriarLinha: (row, linha, i) => {
@@ -1377,48 +1420,62 @@ document.getElementById('btnExportarXlsx').addEventListener('click', async () =>
         row.getCell(4).numFmt = FMT_KG;
         row.getCell(4).alignment = { horizontal: 'right' };
         if (x.devolucao) row.getCell(3).font = { bold: true, size: 10.5, color: { argb: COR.alerta } };
+        const cellSinal = row.getCell(9);
+        cellSinal.value = { formula: `IF(C${row.number}="Sim",-D${row.number},D${row.number})`, result: pesoComSinal(x) };
+        cellSinal.numFmt = FMT_KG;
+        cellSinal.font = { size: 10.5, color: { argb: COR.texto } };
       }
     });
+  wsDet.getColumn(9).width = 18;
+
+  // Toda fórmula de totais do workbook lê daqui — editou peso/tipo/devolução
+  // de um lançamento, os totais e o balanço recalculam sozinhos.
+  const primeiraLinhaDet = headerDet.number + 1;
+  const ultimaLinhaDet = primeiraLinhaDet + Math.max(lanc.length, 1) - 1;
+  const refs = criarRefsLancamentos(primeiraLinhaDet, ultimaLinhaDet);
 
   const wsTotais = novaAba(wb, 'Totais por Tipo');
   linhaTitulo(wsTotais, 'Totais por tipo — ' + nomeMes(mes), 2, COR.azul);
-  linhaKpi(wsTotais, 'Venda de chapa', Math.round(lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + pesoComSinal(x), 0)));
-  linhaKpi(wsTotais, 'Venda de papel ondulado', Math.round(lanc.filter(x => x.tipo === 'venda_papel_ondulado').reduce((s, x) => s + pesoComSinal(x), 0)));
-  linhaKpi(wsTotais, 'Venda de aparas', Math.round(lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + pesoComSinal(x), 0)));
+  linhaKpi(wsTotais, 'Venda de chapa', { f: refs.sumTipo('Venda de chapa'), v: Math.round(lanc.filter(x => x.tipo === 'venda_chapa').reduce((s, x) => s + pesoComSinal(x), 0)) });
+  linhaKpi(wsTotais, 'Venda de papel ondulado', { f: refs.sumTipo('Papel Ondulado'), v: Math.round(lanc.filter(x => x.tipo === 'venda_papel_ondulado').reduce((s, x) => s + pesoComSinal(x), 0)) });
+  linhaKpi(wsTotais, 'Venda de aparas', { f: refs.sumTipo('Venda de aparas'), v: Math.round(lanc.filter(x => x.tipo === 'venda_apara').reduce((s, x) => s + pesoComSinal(x), 0)) });
   wsTotais.addRow([]);
   const bobinaItens = lanc.filter(x => x.tipo === 'compra_bobina');
   const bobinaBruta = bobinaItens.filter(x => !x.devolucao).reduce((s, x) => s + x.peso, 0);
   const bobinaDevolvido = bobinaItens.filter(x => x.devolucao).reduce((s, x) => s + x.peso, 0);
-  linhaKpi(wsTotais, 'Compra de bobina (bruta)', Math.round(bobinaBruta), { cor: COR.verde });
-  linhaKpi(wsTotais, 'Devolução de bobina', Math.round(bobinaDevolvido), { cor: bobinaDevolvido ? COR.alerta : COR.texto });
-  linhaKpi(wsTotais, 'Compra de bobina (líquida)', Math.round(bobinaBruta - bobinaDevolvido), { destaque: true, cor: COR.verde, corFundo: COR.verdeClaro });
+  const rowBruta = linhaKpi(wsTotais, 'Compra de bobina (bruta)', { f: refs.sumTipoDevolucao('Compra de bobina', false), v: Math.round(bobinaBruta) }, { cor: COR.verde });
+  const rowDevolvido = linhaKpi(wsTotais, 'Devolução de bobina', { f: refs.sumTipoDevolucao('Compra de bobina', true), v: Math.round(bobinaDevolvido) }, { cor: bobinaDevolvido ? COR.alerta : COR.texto });
+  linhaKpi(wsTotais, 'Compra de bobina (líquida)', { f: `B${rowBruta.number}-B${rowDevolvido.number}`, v: Math.round(bobinaBruta - bobinaDevolvido) }, { destaque: true, cor: COR.verde, corFundo: COR.verdeClaro });
   wsTotais.getColumn(1).width = 32;
   wsTotais.getColumn(2).width = 16;
 
   const wsRes = novaAba(wb, 'Resumo');
   linhaTitulo(wsRes, 'Perda de papel — ' + nomeMes(mes), 2, COR.azul);
-  linhaKpi(wsRes, 'Estoque inicial', b.estoqueInicial);
-  linhaKpi(wsRes, '+ Entrou (compra de bobina)', b.entrada, { cor: COR.verde });
-  linhaKpi(wsRes, 'Estoque inicial + entrada', b.subtotal);
-  linhaKpi(wsRes, '- Saiu em chapa (produção)', b.saidaChapa);
-  linhaKpi(wsRes, '- Saiu em papel ondulado', b.saidaPapelOndulado);
-  linhaKpi(wsRes, 'Estoque teórico final', b.teorico);
-  linhaKpi(wsRes, 'Vendido como apara (entra como perda)', b.saidaApara);
-  linhaKpi(wsRes, 'Estoque final informado', b.estoqueFinal != null ? b.estoqueFinal : '—');
+  const rl = {};
+  rl.estoqueInicial = linhaKpi(wsRes, 'Estoque inicial', b.estoqueInicial).number;
+  rl.entrada = linhaKpi(wsRes, '+ Entrou (compra de bobina)', { f: refs.sumTipo('Compra de bobina'), v: b.entrada }, { cor: COR.verde }).number;
+  rl.subtotal = linhaKpi(wsRes, 'Estoque inicial + entrada', { f: `B${rl.estoqueInicial}+B${rl.entrada}`, v: b.subtotal }).number;
+  rl.saidaChapa = linhaKpi(wsRes, '- Saiu em chapa (produção)', { f: refs.sumTipo('Venda de chapa'), v: b.saidaChapa }).number;
+  rl.saidaOndulado = linhaKpi(wsRes, '- Saiu em papel ondulado', { f: refs.sumTipo('Papel Ondulado'), v: b.saidaPapelOndulado }).number;
+  rl.teorico = linhaKpi(wsRes, 'Estoque teórico final', { f: `B${rl.subtotal}-B${rl.saidaChapa}-B${rl.saidaOndulado}`, v: b.teorico }).number;
+  rl.apara = linhaKpi(wsRes, 'Vendido como apara (entra como perda)', { f: refs.sumTipo('Venda de aparas'), v: b.saidaApara }).number;
+  rl.estoqueFinal = linhaKpi(wsRes, 'Estoque final informado', b.estoqueFinal != null ? b.estoqueFinal : '—').number;
   const corPerdaRes = b.percPerda == null ? COR.texto : (b.percPerda <= b.meta ? COR.verde : COR.alerta);
-  linhaKpi(wsRes, 'Perda (kg)', b.perda != null ? b.perda : '—', { cor: corPerdaRes, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro });
-  linhaKpi(wsRes, '% Perda', b.percPerda != null ? b.percPerda.toFixed(2) + '%' : '—', { numFmt: false, cor: corPerdaRes });
-  linhaKpi(wsRes, 'Meta (%)', b.meta, { numFmt: false });
+  const perdaFormula = `IF(ISNUMBER(B${rl.estoqueFinal}),B${rl.teorico}-B${rl.estoqueFinal},"—")`;
+  rl.perda = linhaKpi(wsRes, 'Perda (kg)', { f: perdaFormula, v: b.perda != null ? b.perda : '—' }, { cor: corPerdaRes, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro }).number;
+  const pctFormula = `IF(AND(ISNUMBER(B${rl.estoqueFinal}),B${rl.subtotal}<>0),TEXT((B${rl.perda}/B${rl.subtotal})*100,"0.00")&"%","—")`;
+  rl.pct = linhaKpi(wsRes, '% Perda', { f: pctFormula, v: b.percPerda != null ? b.percPerda.toFixed(2) + '%' : '—' }, { numFmt: false, cor: corPerdaRes }).number;
+  rl.meta = linhaKpi(wsRes, 'Meta (%)', b.meta, { numFmt: false }).number;
   wsRes.getColumn(1).width = 36;
   wsRes.getColumn(2).width = 16;
 
-  montarAbaDashboardGeral(wb, mes, lanc, b);
-  montarAbaDashboardTipo(wb, lanc, 'venda_chapa', 'Dashboard Chapas', 'Dashboard — Venda de Chapa');
-  montarAbaDashboardTipo(wb, lanc, 'venda_papel_ondulado', 'Dashboard Ondulado', 'Dashboard — Papel Ondulado');
-  montarAbaDashboardTipo(wb, lanc, 'venda_apara', 'Dashboard Aparas', 'Dashboard — Aparas');
+  montarAbaDashboardGeral(wb, mes, lanc, b, rl, refs);
+  montarAbaDashboardTipo(wb, lanc, 'venda_chapa', 'Dashboard Chapas', 'Dashboard — Venda de Chapa', refs);
+  montarAbaDashboardTipo(wb, lanc, 'venda_papel_ondulado', 'Dashboard Ondulado', 'Dashboard — Papel Ondulado', refs);
+  montarAbaDashboardTipo(wb, lanc, 'venda_apara', 'Dashboard Aparas', 'Dashboard — Aparas', refs);
 
   await baixarWorkbook(wb, 'Perda_Papel_' + mes + '.xlsx');
-  toast('Planilha exportada');
+  toast('Planilha exportada com fórmulas — dá pra editar direto no Excel')
 });
 
 document.getElementById('btnCopiarResumo').addEventListener('click', () => {
