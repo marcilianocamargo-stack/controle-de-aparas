@@ -375,6 +375,14 @@ textarea {
       <div class="balanco-row total"><span>Estoque teórico final</span><span class="v" id="vTeorico">0</span></div>
       <div class="balanco-row sub"><span>Vendido como apara <span class="hint" style="display:inline">(entra como perda)</span></span><span class="v" id="vSaidaApara">0</span></div>
 
+      <label class="lbl">Produto pronto no início do mês (kg) <span id="estoqueProntoInicialBadge" class="badge badge-auto">estimado</span></label>
+      <input type="number" id="estoqueProntoInicial" inputmode="decimal" placeholder="0">
+      <p class="hint">Chapa/papel ondulado já produzido (passou pela máquina) mas ainda não expedido — não é perda, só não virou venda ainda.</p>
+
+      <label class="lbl">Produto pronto no fim do mês (kg) <span class="hint" style="display:inline">— contagem física, ainda não expedido</span></label>
+      <input type="number" id="estoqueProntoFinal" inputmode="decimal" placeholder="0">
+      <p class="hint" id="produtoProntoDeltaHint"></p>
+
       <label class="lbl">Estoque final informado (kg) <span class="hint" style="display:inline">— contagem física no fechamento</span></label>
       <input type="number" id="estoqueFinal" inputmode="decimal" placeholder="0">
 
@@ -1048,19 +1056,29 @@ function calcularBalanco(mes) {
   const estoqueInicialAuto = fechAnterior && fechAnterior.estoqueFinal != null;
   const estoqueInicial = fech.estoqueInicial != null ? fech.estoqueInicial : (estoqueInicialAuto ? fechAnterior.estoqueFinal : 0);
 
+  // Produto pronto (chapa/ondulado já produzido, passou pela máquina) que
+  // ainda não foi expedido: não é venda (não aparece em saidaChapa/Ondulado)
+  // nem é bobina (não aparece no estoque de matéria-prima), mas também não
+  // é perda — só está parado esperando expedir. O que sobrou a mais desse
+  // estoque no fim do mês precisa ser tirado da conta da perda.
+  const estoqueProntoInicialAuto = fechAnterior && fechAnterior.estoqueProntoFinal != null;
+  const estoqueProntoInicial = fech.estoqueProntoInicial != null ? fech.estoqueProntoInicial : (estoqueProntoInicialAuto ? fechAnterior.estoqueProntoFinal : 0);
+  const estoqueProntoFinal = fech.estoqueProntoFinal != null ? fech.estoqueProntoFinal : null;
+  const produtoProntoDelta = estoqueProntoFinal != null ? estoqueProntoFinal - estoqueProntoInicial : 0;
+
   const subtotal = estoqueInicial + entrada;
   // Apara não é descontada aqui: é resíduo de produção (não virou chapa/ondulado),
   // então o peso vendido como apara deve aparecer como perda, mesmo gerando receita.
   const teorico = subtotal - saidaChapa - saidaPapelOndulado;
   const estoqueFinal = fech.estoqueFinal != null ? fech.estoqueFinal : null;
 
-  const perda = estoqueFinal != null ? teorico - estoqueFinal : null;
+  const perda = estoqueFinal != null ? teorico - estoqueFinal - produtoProntoDelta : null;
   // % de perda é sobre o que foi USADO no mês (entrada - o que sobrou), não
   // sobre o total disponível — senão estoque parado no pátio dilui a conta.
   const usado = estoqueFinal != null ? subtotal - estoqueFinal : null;
   const percPerda = perda != null && usado > 0 ? (perda / usado) * 100 : null;
 
-  return { entrada, saidaChapa, saidaApara, saidaPapelOndulado, estoqueInicial, estoqueInicialAuto, subtotal, teorico, estoqueFinal, perda, usado, percPerda, meta: fech.meta != null ? fech.meta : 8 };
+  return { entrada, saidaChapa, saidaApara, saidaPapelOndulado, estoqueInicial, estoqueInicialAuto, estoqueProntoInicial, estoqueProntoInicialAuto, estoqueProntoFinal, produtoProntoDelta, subtotal, teorico, estoqueFinal, perda, usado, percPerda, meta: fech.meta != null ? fech.meta : 8 };
 }
 
 function atualizarFechamento() {
@@ -1077,6 +1095,20 @@ function atualizarFechamento() {
   document.getElementById('vSaidaApara').textContent = fmt(b.saidaApara) + ' kg';
   document.getElementById('vSaidaPapelOndulado').textContent = fmt(b.saidaPapelOndulado) + ' kg';
   document.getElementById('vTeorico').textContent = fmt(b.teorico) + ' kg';
+
+  document.getElementById('estoqueProntoInicial').value = b.estoqueProntoInicial || '';
+  document.getElementById('estoqueProntoInicialBadge').classList.toggle('hidden', !b.estoqueProntoInicialAuto);
+  document.getElementById('estoqueProntoInicialBadge').textContent = b.estoqueProntoInicialAuto ? 'auto (mês anterior)' : 'informe manualmente';
+  document.getElementById('estoqueProntoFinal').value = b.estoqueProntoFinal != null ? b.estoqueProntoFinal : '';
+  const deltaHint = document.getElementById('produtoProntoDeltaHint');
+  if (b.estoqueProntoFinal == null || b.produtoProntoDelta === 0) {
+    deltaHint.textContent = '';
+  } else if (b.produtoProntoDelta > 0) {
+    deltaHint.textContent = '📦 ' + fmt(b.produtoProntoDelta) + ' kg a mais parado sem expedir — não conta como perda.';
+  } else {
+    deltaHint.textContent = '📦 ' + fmt(-b.produtoProntoDelta) + ' kg desse estoque foi expedido este mês.';
+  }
+
   document.getElementById('estoqueFinal').value = b.estoqueFinal != null ? b.estoqueFinal : '';
   document.getElementById('metaPerda').value = b.meta;
 
@@ -1107,9 +1139,13 @@ document.getElementById('btnSalvarFechamento').addEventListener('click', () => {
   const mes = document.getElementById('mesFechamento').value;
   const estoqueInicial = parseFloat(document.getElementById('estoqueInicial').value);
   const estoqueFinalRaw = document.getElementById('estoqueFinal').value;
+  const estoqueProntoInicial = parseFloat(document.getElementById('estoqueProntoInicial').value);
+  const estoqueProntoFinalRaw = document.getElementById('estoqueProntoFinal').value;
   salvarFechamento(mes, {
     estoqueInicial: isNaN(estoqueInicial) ? null : estoqueInicial,
     estoqueFinal: estoqueFinalRaw === '' ? null : parseFloat(estoqueFinalRaw),
+    estoqueProntoInicial: isNaN(estoqueProntoInicial) ? null : estoqueProntoInicial,
+    estoqueProntoFinal: estoqueProntoFinalRaw === '' ? null : parseFloat(estoqueProntoFinalRaw),
     meta: parseFloat(document.getElementById('metaPerda').value) || 8,
     fechadoEm: new Date().toISOString()
   });
@@ -1385,6 +1421,8 @@ function montarAbaDashboardGeral(wb, mes, lanc, b, rl, refs) {
   linhaKpi(ws, '- Saída em papel ondulado', { f: ref('saidaOndulado'), v: Math.round(b.saidaPapelOndulado) });
   linhaKpi(ws, 'Estoque teórico final', { f: ref('teorico'), v: Math.round(b.teorico) });
   linhaKpi(ws, 'Vendido como apara', { f: ref('apara'), v: Math.round(b.saidaApara) });
+  linhaKpi(ws, 'Produto pronto no início (não expedido)', { f: ref('prontoInicial'), v: Math.round(b.estoqueProntoInicial) });
+  linhaKpi(ws, 'Produto pronto no fim (não expedido)', { f: ref('prontoFinal'), v: b.estoqueProntoFinal != null ? Math.round(b.estoqueProntoFinal) : '—' });
   linhaKpi(ws, 'Estoque final informado', { f: ref('estoqueFinal'), v: b.estoqueFinal != null ? Math.round(b.estoqueFinal) : '—' });
   const corPerda = b.percPerda == null ? COR.texto : (b.percPerda <= b.meta ? COR.verde : COR.alerta);
   linhaKpi(ws, 'Perda', { f: ref('perda'), v: b.perda != null ? Math.round(b.perda) : '—' }, { cor: corPerda, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro });
@@ -1495,9 +1533,14 @@ document.getElementById('btnExportarXlsx').addEventListener('click', async () =>
   rl.saidaOndulado = linhaKpi(wsRes, '- Saiu em papel ondulado', { f: refs.sumTipo('Papel Ondulado'), v: b.saidaPapelOndulado }).number;
   rl.teorico = linhaKpi(wsRes, 'Estoque teórico final', { f: `B${rl.subtotal}-B${rl.saidaChapa}-B${rl.saidaOndulado}`, v: b.teorico }).number;
   rl.apara = linhaKpi(wsRes, 'Vendido como apara (entra como perda)', { f: refs.sumTipo('Venda de aparas'), v: b.saidaApara }).number;
+  rl.prontoInicial = linhaKpi(wsRes, 'Produto pronto no início do mês (não expedido)', b.estoqueProntoInicial || 0).number;
+  rl.prontoFinal = linhaKpi(wsRes, 'Produto pronto no fim do mês (não expedido)', b.estoqueProntoFinal != null ? b.estoqueProntoFinal : '—').number;
   rl.estoqueFinal = linhaKpi(wsRes, 'Estoque final informado', b.estoqueFinal != null ? b.estoqueFinal : '—').number;
   const corPerdaRes = b.percPerda == null ? COR.texto : (b.percPerda <= b.meta ? COR.verde : COR.alerta);
-  const perdaFormula = `IF(ISNUMBER(B${rl.estoqueFinal}),B${rl.teorico}-B${rl.estoqueFinal},"—")`;
+  // Produto pronto que ficou parado sem expedir (passou pela máquina, só não
+  // virou venda) não é perda — o que sobrou a mais desse estoque é descontado.
+  const prontoDeltaExpr = `(IF(ISNUMBER(B${rl.prontoFinal}),B${rl.prontoFinal},0)-B${rl.prontoInicial})`;
+  const perdaFormula = `IF(ISNUMBER(B${rl.estoqueFinal}),B${rl.teorico}-B${rl.estoqueFinal}-${prontoDeltaExpr},"—")`;
   rl.perda = linhaKpi(wsRes, 'Perda (kg)', { f: perdaFormula, v: b.perda != null ? b.perda : '—' }, { cor: corPerdaRes, destaque: true, corFundo: b.percPerda != null && b.percPerda <= b.meta ? COR.verdeClaro : COR.azulClaro }).number;
   // % sobre o que foi USADO (subtotal - estoque final), não sobre o total
   // disponível — senão estoque parado no pátio dilui a conta (ver calcularBalanco).
@@ -1546,6 +1589,7 @@ document.getElementById('btnCopiarResumo').addEventListener('click', () => {
     'Vendido como apara no mês (entra na perda)',
     fmt(b.saidaApara),
     '',
+    ...(b.produtoProntoDelta ? ['Produto pronto parado sem expedir (não é perda)', (b.produtoProntoDelta > 0 ? '+' : '') + fmt(b.produtoProntoDelta), ''] : []),
     'Perda: ' + (b.perda != null ? fmt(b.perda) + ' kg' : '?') + (b.percPerda != null ? ' (' + b.percPerda.toFixed(1) + '%)' : ''),
     b.percPerda != null ? (b.percPerda <= b.meta ? '✅ dentro da meta de ' + b.meta + '%' : '⚠️ acima da meta de ' + b.meta + '%') : ''
   ];
