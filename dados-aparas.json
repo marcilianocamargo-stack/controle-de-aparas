@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-30T18:08:29.386Z",
+  "geradoEm": "2026-09-30T18:15:43.629Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -2941,6 +2941,41 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-09-30T18:07:45.084Z"
+      },
+      {
+        "id": "1790791937096_81t3y",
+        "data": "2026-09-24",
+        "tipo": "venda_apara",
+        "peso": 14840,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "001.477",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-30T18:12:17.096Z"
+      },
+      {
+        "id": "1790792102632_syd9d",
+        "data": "2026-09-25",
+        "tipo": "venda_apara",
+        "peso": 12220,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1478",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-30T18:15:02.632Z"
+      }
+    ],
+    "2026-06": [
+      {
+        "id": "1790792048236_avdrj",
+        "data": "2026-06-30",
+        "tipo": "venda_apara",
+        "peso": 12760,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1480",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-09-30T18:14:08.236Z"
       }
     ]
   },
