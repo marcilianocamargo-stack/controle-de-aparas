@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-10-01T13:59:59.097Z",
+  "geradoEm": "2026-10-01T16:39:55.447Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -3094,6 +3094,39 @@
         "origem": "pdf",
         "arquivo": "colado",
         "criadoEm": "2026-09-30T18:07:23.934Z"
+      },
+      {
+        "id": "1790872635184_et1cu",
+        "data": "2026-09-30",
+        "tipo": "venda_papel_ondulado",
+        "peso": 2080,
+        "parceiro": "SERRASUL EMBALAGENS LTDA",
+        "nota": "027679",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T16:37:15.184Z"
+      },
+      {
+        "id": "1790872708913_wixqv",
+        "data": "2026-09-30",
+        "tipo": "venda_papel_ondulado",
+        "peso": 2100,
+        "parceiro": "EMBALAMAIS DO BRASIL IND. E COM. DE MAQUINAS E EMB. LTDA",
+        "nota": "27680",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T16:38:28.913Z"
+      },
+      {
+        "id": "1790872779653_su18y",
+        "data": "2026-09-30",
+        "tipo": "venda_chapa",
+        "peso": 3560,
+        "parceiro": "ABAPEL COMERCIO DE EMBALAGENS LTDA",
+        "nota": "27681",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T16:39:39.653Z"
       }
     ],
     "2026-06": [
