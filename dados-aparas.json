@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-09-30T18:15:43.629Z",
+  "geradoEm": "2026-10-01T13:38:35.809Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -2963,6 +2963,137 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-09-30T18:15:02.632Z"
+      },
+      {
+        "id": "1790859358841_kdnjty",
+        "data": "2026-09-11",
+        "tipo": "compra_bobina",
+        "peso": 20420,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27548",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T12:55:58.841Z"
+      },
+      {
+        "id": "1790859399499_omb15g",
+        "data": "2026-09-14",
+        "tipo": "compra_bobina",
+        "peso": 15120,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27567",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T12:56:39.499Z"
+      },
+      {
+        "id": "1790859416724_qa19ca",
+        "data": "2026-09-16",
+        "tipo": "compra_bobina",
+        "peso": 65744,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27585",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T12:56:56.724Z"
+      },
+      {
+        "id": "1790859442393_hcjpzb",
+        "data": "2026-09-17",
+        "tipo": "compra_bobina",
+        "peso": 11300,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27590",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T12:57:22.393Z"
+      },
+      {
+        "id": "1790859456789_86i9q0",
+        "data": "2026-09-21",
+        "tipo": "compra_bobina",
+        "peso": 34050,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27619",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T12:57:36.789Z"
+      },
+      {
+        "id": "1790859609417_jvtjgk",
+        "data": "2026-09-26",
+        "tipo": "compra_bobina",
+        "peso": 66260,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
+        "nota": "27652",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T13:00:09.417Z"
+      },
+      {
+        "id": "1790859734216_gobnd",
+        "data": "2026-09-22",
+        "tipo": "compra_bobina",
+        "peso": 35720,
+        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES LTDA",
+        "nota": "27628",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T13:02:14.216Z"
+      },
+      {
+        "id": "1790861786800_cz41mf",
+        "data": "2026-09-11",
+        "tipo": "compra_bobina",
+        "peso": 34050,
+        "parceiro": "NOVACKI PAPEL E EMBALAGENS S/A - MP1",
+        "nota": "79497",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T13:36:26.800Z"
+      },
+      {
+        "id": "1790861824052_cjya8g",
+        "data": "2026-09-08",
+        "tipo": "compra_bobina",
+        "peso": 22635,
+        "parceiro": "NOVACKI PAPEL E EMBALAGENS S/A - MP1",
+        "nota": "79429",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T13:37:04.052Z"
+      },
+      {
+        "id": "1790861887877_0p1nrc",
+        "data": "2026-09-08",
+        "tipo": "compra_bobina",
+        "peso": 32660,
+        "parceiro": "NOVACKI PAPEL E EMBALAGENS S/A - MP1",
+        "nota": "79426",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T13:38:07.878Z"
+      },
+      {
+        "id": "1790861902454_onv4ks",
+        "data": "2026-09-08",
+        "tipo": "compra_bobina",
+        "peso": 10449,
+        "parceiro": "NOVACKI PAPEL E EMBALAGENS S/A - MP1",
+        "nota": "79431",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T13:38:22.454Z"
       }
     ],
     "2026-06": [
@@ -2993,6 +3124,12 @@
       "fechadoEm": "2026-09-02T17:43:11.172Z",
       "estoqueProntoInicial": 25000,
       "estoqueProntoFinal": 17520
+    },
+    "2026-09": {
+      "estoqueInicial": 110781,
+      "estoqueFinal": 136799,
+      "meta": 8,
+      "fechadoEm": "2026-10-01T12:33:12.221Z"
     }
   }
 }
