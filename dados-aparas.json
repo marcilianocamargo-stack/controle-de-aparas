@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-10-01T13:38:35.809Z",
+  "geradoEm": "2026-10-01T13:59:59.097Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -2619,18 +2619,6 @@
         "criadoEm": "2026-09-30T17:49:24.140Z"
       },
       {
-        "id": "1790790575935_hecqfg",
-        "data": "2026-09-20",
-        "tipo": "venda_chapa",
-        "peso": 5320,
-        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
-        "nota": "27608",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-09-30T17:49:35.935Z"
-      },
-      {
         "id": "1790790950750_b1uzop",
         "data": "2026-09-20",
         "tipo": "venda_chapa",
@@ -2713,18 +2701,6 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-09-30T17:56:51.479Z"
-      },
-      {
-        "id": "1790791022739_ykp9ny",
-        "data": "2026-09-22",
-        "tipo": "venda_chapa",
-        "peso": 487,
-        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
-        "nota": "27625",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-09-30T17:57:02.739Z"
       },
       {
         "id": "1790791033373_sjlriv",
@@ -2907,18 +2883,6 @@
         "criadoEm": "2026-09-30T18:07:08.900Z"
       },
       {
-        "id": "1790791643934_f4ul2g",
-        "data": "2026-09-28",
-        "tipo": "venda_chapa",
-        "peso": 4758,
-        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
-        "nota": "27668",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-09-30T18:07:23.934Z"
-      },
-      {
         "id": "1790791657558_3iol1d",
         "data": "2026-09-28",
         "tipo": "venda_chapa",
@@ -3094,6 +3058,42 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-10-01T13:38:22.454Z"
+      },
+      {
+        "id": "1790790575935_hecqfg",
+        "data": "2026-09-20",
+        "tipo": "venda_papel_ondulado",
+        "peso": 5320,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27608",
+        "devolucao": false,
+        "origem": "pdf",
+        "arquivo": "colado",
+        "criadoEm": "2026-09-30T17:49:35.935Z"
+      },
+      {
+        "id": "1790791022739_ykp9ny",
+        "data": "2026-09-22",
+        "tipo": "venda_papel_ondulado",
+        "peso": 487,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27625",
+        "devolucao": false,
+        "origem": "pdf",
+        "arquivo": "colado",
+        "criadoEm": "2026-09-30T17:57:02.739Z"
+      },
+      {
+        "id": "1790791643934_f4ul2g",
+        "data": "2026-09-28",
+        "tipo": "venda_papel_ondulado",
+        "peso": 4758,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27668",
+        "devolucao": false,
+        "origem": "pdf",
+        "arquivo": "colado",
+        "criadoEm": "2026-09-30T18:07:23.934Z"
       }
     ],
     "2026-06": [
