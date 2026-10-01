@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-10-01T16:39:57.696Z",
+  "geradoEm": "2026-10-01T17:03:48.974Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -2953,18 +2953,6 @@
         "criadoEm": "2026-10-01T12:56:39.499Z"
       },
       {
-        "id": "1790859416724_qa19ca",
-        "data": "2026-09-16",
-        "tipo": "compra_bobina",
-        "peso": 65744,
-        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
-        "nota": "27585",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-10-01T12:56:56.724Z"
-      },
-      {
         "id": "1790859442393_hcjpzb",
         "data": "2026-09-17",
         "tipo": "compra_bobina",
@@ -2975,18 +2963,6 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-10-01T12:57:22.393Z"
-      },
-      {
-        "id": "1790859456789_86i9q0",
-        "data": "2026-09-21",
-        "tipo": "compra_bobina",
-        "peso": 34050,
-        "parceiro": "COMERCIO DE PAPEIS E TRANSPORTES PRIME LTDA",
-        "nota": "27619",
-        "arquivo": "colado",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-10-01T12:57:36.789Z"
       },
       {
         "id": "1790859609417_jvtjgk",
