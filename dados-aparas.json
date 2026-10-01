@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-10-01T17:03:48.974Z",
+  "geradoEm": "2026-10-01T17:19:17.892Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -3103,6 +3103,77 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-10-01T16:39:39.653Z"
+      },
+      {
+        "id": "1790874638222_dfups",
+        "data": "2026-09-13",
+        "tipo": "venda_chapa",
+        "peso": 1686,
+        "parceiro": "ANSELMO - IND E COMERCIO DE EMBALAGEM LTDA",
+        "nota": "27557",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T17:10:38.222Z"
+      },
+      {
+        "id": "1790875056470_ij87h9",
+        "data": "2026-09-13",
+        "tipo": "venda_chapa",
+        "peso": 1400,
+        "parceiro": "RENOVAPEL RECICLAGEM DE PAPEIS LTDA",
+        "nota": "27558",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T17:17:36.470Z"
+      },
+      {
+        "id": "1790875073120_gdpgwj",
+        "data": "2026-09-13",
+        "tipo": "venda_chapa",
+        "peso": 2988,
+        "parceiro": "HARMONY EMBALAGENS LTDA",
+        "nota": "27559",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T17:17:53.120Z"
+      },
+      {
+        "id": "1790875089244_88cbmw",
+        "data": "2026-09-13",
+        "tipo": "venda_chapa",
+        "peso": 904,
+        "parceiro": "PCBOX EMBALAGENS LTDA",
+        "nota": "27560",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T17:18:09.244Z"
+      },
+      {
+        "id": "1790875116094_bqxw2x",
+        "data": "2026-09-14",
+        "tipo": "venda_chapa",
+        "peso": 4758,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27565",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T17:18:36.094Z"
+      },
+      {
+        "id": "1790875147384_ejamg0",
+        "data": "2026-09-14",
+        "tipo": "venda_chapa",
+        "peso": 2974,
+        "parceiro": "LOSSO & RUNDBUCHNER EMBALAGENS LTDA",
+        "nota": "27568",
+        "arquivo": "colado",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-10-01T17:19:07.384Z"
       }
     ],
     "2026-06": [
