@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-10-01T17:19:48.930Z",
+  "geradoEm": "2026-10-01T19:53:24.156Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -3174,6 +3174,61 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-10-01T17:19:07.384Z"
+      },
+      {
+        "id": "1790884404156_cxh6mq",
+        "data": "2026-09-03",
+        "tipo": "compra_bobina",
+        "peso": 34750,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27495",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T19:53:24.156Z"
+      },
+      {
+        "id": "1790884404171_9vut3g",
+        "data": "2026-09-10",
+        "tipo": "compra_bobina",
+        "peso": 17620,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27530",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T19:53:24.156Z"
+      },
+      {
+        "id": "1790884404172_5vhcrn",
+        "data": "2026-09-29",
+        "tipo": "compra_bobina",
+        "peso": 32680,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27672",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T19:53:24.156Z"
+      },
+      {
+        "id": "1790884404173_jr902b",
+        "data": "2026-09-30",
+        "tipo": "venda_apara",
+        "peso": 12760,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1480",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T19:53:24.156Z"
+      },
+      {
+        "id": "1790884404174_xvckjo",
+        "data": "2026-09-30",
+        "tipo": "venda_apara",
+        "peso": 10000,
+        "parceiro": "APARAS NO PÁTIO 30/09 (ainda não vendidas)",
+        "nota": "",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T19:53:24.156Z"
       }
     ],
     "2026-06": [
@@ -3206,10 +3261,10 @@
       "estoqueProntoFinal": 17520
     },
     "2026-09": {
-      "estoqueInicial": 110781,
+      "estoqueInicial": 110783,
       "estoqueFinal": 136799,
       "meta": 8,
-      "fechadoEm": "2026-10-01T12:33:12.221Z"
+      "fechadoEm": "2026-10-01T19:53:24.156Z"
     }
   }
 }
