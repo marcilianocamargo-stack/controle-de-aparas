@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-10-01T19:53:24.156Z",
+  "geradoEm": "2026-10-19T19:46:24.709Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -3209,23 +3209,23 @@
         "criadoEm": "2026-10-01T19:53:24.156Z"
       },
       {
-        "id": "1790884404173_jr902b",
-        "data": "2026-09-30",
-        "tipo": "venda_apara",
-        "peso": 12760,
-        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
-        "nota": "1480",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-10-01T19:53:24.156Z"
-      },
-      {
         "id": "1790884404174_xvckjo",
         "data": "2026-09-30",
         "tipo": "venda_apara",
         "peso": 10000,
         "parceiro": "APARAS NO PÁTIO 30/09 (ainda não vendidas)",
         "nota": "",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-10-01T19:53:24.156Z"
+      },
+      {
+        "id": "1790884404173_jr902b",
+        "data": "2026-09-30",
+        "tipo": "venda_apara",
+        "peso": 12760,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "1480",
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-10-01T19:53:24.156Z"
@@ -3262,9 +3262,9 @@
     },
     "2026-09": {
       "estoqueInicial": 110783,
-      "estoqueFinal": 136799,
+      "estoqueFinal": 146799,
       "meta": 8,
-      "fechadoEm": "2026-10-01T19:53:24.156Z"
+      "fechadoEm": "2026-10-01T20:08:01.165Z"
     }
   }
 }
