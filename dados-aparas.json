@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T16:22:55.915Z",
+  "geradoEm": "2026-11-03T16:25:04.915Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -4400,7 +4400,7 @@
         "id": "1793709273872_i98gv",
         "data": "2026-10-31",
         "tipo": "venda_apara",
-        "peso": 2000,
+        "peso": 6000,
         "parceiro": "Estoque",
         "nota": "00000",
         "devolucao": false,
