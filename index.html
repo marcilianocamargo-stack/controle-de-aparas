@@ -1095,7 +1095,7 @@ function atualizarFechamento() {
     const dentroDaMeta = b.percPerda <= b.meta;
     box.className = 'perda-box ' + (dentroDaMeta ? 'ok' : 'warn');
     pctEl.textContent = b.percPerda.toFixed(1) + '%';
-    subEl.textContent = '';
+    subEl.textContent = 'Perda: ' + fmt(b.perda) + ' kg · meta ' + b.meta + '% · ' + (dentroDaMeta ? '✅ dentro da meta' : '⚠️ acima da meta');
   }
 }
 

@@ -1,4 +1,4 @@
-const CACHE = 'aparas-v4';
+const CACHE = 'aparas-v3';
 const SHARE_CACHE = 'aparas-share-v1';
 const ASSETS = [
   './',
