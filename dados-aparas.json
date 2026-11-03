@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T13:06:27.530Z",
+  "geradoEm": "2026-11-03T13:12:26.904Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -4278,28 +4278,6 @@
         "criadoEm": "2026-11-03T00:01:24.056Z"
       },
       {
-        "id": "1793707222754_cj0qa",
-        "data": "2026-10-31",
-        "tipo": "venda_chapa",
-        "peso": 32000,
-        "parceiro": "ESTOQUE",
-        "nota": "00000",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-11-03T12:00:22.754Z"
-      },
-      {
-        "id": "1793707360718_k20fo",
-        "data": "2026-10-31",
-        "tipo": "venda_apara",
-        "peso": 9200,
-        "parceiro": "ESTOQUE",
-        "nota": "00000",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-11-03T12:02:40.718Z"
-      },
-      {
         "id": "1793707840822_im67wk",
         "data": "2026-10-05",
         "tipo": "compra_bobina",
@@ -4443,6 +4421,28 @@
         "criadoEm": "2026-11-03T12:26:09.265Z"
       },
       {
+        "id": "1793709273872_i98gv",
+        "data": "2026-10-31",
+        "tipo": "venda_apara",
+        "peso": 2000,
+        "parceiro": "Estoque",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:34:33.872Z"
+      },
+      {
+        "id": "1793710599641_7p956",
+        "data": "2026-10-31",
+        "tipo": "venda_papel_ondulado",
+        "peso": 1050,
+        "parceiro": "RONSANI IND. DE MOVEIS E ESTOFADOS LTDA",
+        "nota": "27890",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:56:39.641Z"
+      },
+      {
         "id": "1793711187530_b75dpk",
         "data": "2026-10-30",
         "tipo": "venda_chapa",
@@ -4526,6 +4526,12 @@
       "estoqueFinal": 146799,
       "meta": 8,
       "fechadoEm": "2026-10-01T20:08:01.165Z"
+    },
+    "2026-10": {
+      "estoqueInicial": 146799,
+      "estoqueFinal": 238200,
+      "meta": 8,
+      "fechadoEm": "2026-11-03T13:12:20.844Z"
     }
   }
 }
