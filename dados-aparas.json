@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T12:06:01.578Z",
+  "geradoEm": "2026-11-03T12:10:40.822Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -4298,6 +4298,116 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-11-03T12:02:40.718Z"
+      },
+      {
+        "id": "1793707840822_im67wk",
+        "data": "2026-10-05",
+        "tipo": "compra_bobina",
+        "peso": 65950,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27713",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.822Z"
+      },
+      {
+        "id": "1793707840823_3ioma8",
+        "data": "2026-10-10",
+        "tipo": "compra_bobina",
+        "peso": 66760,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27744",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.823Z"
+      },
+      {
+        "id": "1793707840824_vblshz",
+        "data": "2026-10-12",
+        "tipo": "compra_bobina",
+        "peso": 32950,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27755",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.824Z"
+      },
+      {
+        "id": "1793707840825_4imuqj",
+        "data": "2026-10-17",
+        "tipo": "compra_bobina",
+        "peso": 70260,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27789",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.825Z"
+      },
+      {
+        "id": "1793707840826_arehvb",
+        "data": "2026-10-21",
+        "tipo": "compra_bobina",
+        "peso": 32910,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27821",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.826Z"
+      },
+      {
+        "id": "1793707840827_o5cnni",
+        "data": "2026-10-21",
+        "tipo": "compra_bobina",
+        "peso": 32900,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27823",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.827Z"
+      },
+      {
+        "id": "1793707840828_8pl3t1",
+        "data": "2026-10-22",
+        "tipo": "compra_bobina",
+        "peso": 32870,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27828",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.828Z"
+      },
+      {
+        "id": "1793707840829_aa9mqe",
+        "data": "2026-10-27",
+        "tipo": "compra_bobina",
+        "peso": 32800,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27858",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.829Z"
+      },
+      {
+        "id": "1793707840830_ygdwvo",
+        "data": "2026-10-28",
+        "tipo": "compra_bobina",
+        "peso": 44050,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27865",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.830Z"
+      },
+      {
+        "id": "1793707840831_ar0442",
+        "data": "2026-10-28",
+        "tipo": "compra_bobina",
+        "peso": 32860,
+        "parceiro": "PIQUIRI INDUSTRIA E COMERCIO DE PAPEIS LTDA",
+        "nota": "27866",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:10:40.831Z"
       }
     ],
     "2026-11": []
