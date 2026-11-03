@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T16:25:04.915Z",
+  "geradoEm": "2026-11-03T16:33:32.893Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -4397,17 +4397,6 @@
         "criadoEm": "2026-11-03T12:26:09.265Z"
       },
       {
-        "id": "1793709273872_i98gv",
-        "data": "2026-10-31",
-        "tipo": "venda_apara",
-        "peso": 6000,
-        "parceiro": "Estoque",
-        "nota": "00000",
-        "devolucao": false,
-        "origem": "manual",
-        "criadoEm": "2026-11-03T12:34:33.872Z"
-      },
-      {
         "id": "1793710599641_7p956",
         "data": "2026-10-31",
         "tipo": "venda_papel_ondulado",
@@ -4441,6 +4430,17 @@
         "origem": "pdf",
         "arquivo": "27757 MUNDO FIT.pdf",
         "criadoEm": "2026-11-03T00:01:24.000Z"
+      },
+      {
+        "id": "1793709273872_i98gv",
+        "data": "2026-10-31",
+        "tipo": "venda_apara",
+        "peso": 6000,
+        "parceiro": "Estoque",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:34:33.872Z"
       }
     ],
     "2026-11": [
