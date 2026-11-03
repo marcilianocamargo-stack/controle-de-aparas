@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T12:26:09.263Z",
+  "geradoEm": "2026-11-03T13:06:27.530Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -4441,9 +4441,70 @@
         "devolucao": false,
         "origem": "manual",
         "criadoEm": "2026-11-03T12:26:09.265Z"
+      },
+      {
+        "id": "1793711187530_b75dpk",
+        "data": "2026-10-30",
+        "tipo": "venda_chapa",
+        "peso": 4070,
+        "parceiro": "ABAPEL COMERCIO DE EMBALAGENS LTDA",
+        "nota": "27886",
+        "arquivo": "27886 ABAPEL.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-03T13:06:27.530Z"
       }
     ],
-    "2026-11": []
+    "2026-11": [
+      {
+        "id": "1793711187531_12pjey",
+        "data": "2026-11-01",
+        "tipo": "venda_chapa",
+        "peso": 1810,
+        "parceiro": "RENOVAPEL RECICLAGEM DE PAPEIS LTDA",
+        "nota": "27893",
+        "arquivo": "27893 RENOVAPEL.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-03T13:06:27.531Z"
+      },
+      {
+        "id": "1793711187532_l2w76g",
+        "data": "2026-11-01",
+        "tipo": "venda_chapa",
+        "peso": 2140,
+        "parceiro": "TOLECAIXAS - INDUSTRIA E COMERCIO DE CAIXAS LTDA",
+        "nota": "27894",
+        "arquivo": "27894 TOLECAIXAS.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-03T13:06:27.532Z"
+      },
+      {
+        "id": "1793711187533_0wuo3j",
+        "data": "2026-11-01",
+        "tipo": "venda_chapa",
+        "peso": 5180,
+        "parceiro": "RM EMBALAGENS DE PAPELAO LTDA",
+        "nota": "27895",
+        "arquivo": "27895 RM.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-03T13:06:27.533Z"
+      },
+      {
+        "id": "1793711187534_1vran9",
+        "data": "2026-11-02",
+        "tipo": "venda_papel_ondulado",
+        "peso": 5075,
+        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
+        "nota": "27899",
+        "arquivo": "27899 Z P BICAIO.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-03T13:06:27.534Z"
+      }
+    ]
   },
   "fechamentos": {
     "2026-07": {
