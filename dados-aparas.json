@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T16:21:52.296Z",
+  "geradoEm": "2026-11-03T16:22:55.915Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -4517,9 +4517,9 @@
     },
     "2026-10": {
       "estoqueInicial": 146799,
-      "estoqueFinal": 232200,
+      "estoqueFinal": 238200,
       "meta": 8,
-      "fechadoEm": "2026-11-03T13:13:08.258Z"
+      "fechadoEm": "2026-11-03T16:22:55.915Z"
     }
   }
 }
