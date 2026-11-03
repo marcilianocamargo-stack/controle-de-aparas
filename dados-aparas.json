@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T13:26:11.811Z",
+  "geradoEm": "2026-11-03T16:21:52.296Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -3880,18 +3880,6 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-11-03T00:01:24.024Z"
-      },
-      {
-        "id": "1793664084025_7ijnk5",
-        "data": "2026-10-20",
-        "tipo": "venda_papel_ondulado",
-        "peso": 5800,
-        "parceiro": "Z P BICAIO INDUSTRIA COMERCIO EXPORTACAO EIRELI",
-        "nota": "27814",
-        "arquivo": "27814 Z P BICAI - SUBSTITUIÇÃO DAS NFs 27608 E 27625.pdf",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-11-03T00:01:24.025Z"
       },
       {
         "id": "1793664084026_fecmn7",
