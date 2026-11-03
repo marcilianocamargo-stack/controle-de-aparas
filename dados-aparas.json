@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T13:12:26.904Z",
+  "geradoEm": "2026-11-03T13:26:11.811Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -3594,18 +3594,6 @@
         "criadoEm": "2026-11-03T00:01:23.999Z"
       },
       {
-        "id": "1793664084000_n3p5lk",
-        "data": "2026-10-12",
-        "tipo": "venda_papel_ondulado",
-        "peso": 120,
-        "parceiro": "MUNDO FIT SPORTWEAR LTDA",
-        "nota": "27757",
-        "arquivo": "27757 MUNDO FIT.pdf",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-11-03T00:01:24.000Z"
-      },
-      {
         "id": "1793664084001_hopjpe",
         "data": "2026-10-12",
         "tipo": "venda_chapa",
@@ -4453,6 +4441,18 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-11-03T13:06:27.530Z"
+      },
+      {
+        "id": "1793664084000_n3p5lk",
+        "data": "2026-10-12",
+        "tipo": "venda_papel_ondulado",
+        "peso": 2070,
+        "parceiro": "MUNDO FIT SPORTWEAR LTDA",
+        "nota": "27757",
+        "devolucao": false,
+        "origem": "pdf",
+        "arquivo": "27757 MUNDO FIT.pdf",
+        "criadoEm": "2026-11-03T00:01:24.000Z"
       }
     ],
     "2026-11": [
@@ -4529,9 +4529,9 @@
     },
     "2026-10": {
       "estoqueInicial": 146799,
-      "estoqueFinal": 238200,
+      "estoqueFinal": 232200,
       "meta": 8,
-      "fechadoEm": "2026-11-03T13:12:20.844Z"
+      "fechadoEm": "2026-11-03T13:13:08.258Z"
     }
   }
 }
