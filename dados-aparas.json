@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-03T00:01:23.971Z",
+  "geradoEm": "2026-11-03T12:06:01.578Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -4276,8 +4276,31 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-11-03T00:01:24.056Z"
+      },
+      {
+        "id": "1793707222754_cj0qa",
+        "data": "2026-10-31",
+        "tipo": "venda_chapa",
+        "peso": 32000,
+        "parceiro": "ESTOQUE",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:00:22.754Z"
+      },
+      {
+        "id": "1793707360718_k20fo",
+        "data": "2026-10-31",
+        "tipo": "venda_apara",
+        "peso": 9200,
+        "parceiro": "ESTOQUE",
+        "nota": "00000",
+        "devolucao": false,
+        "origem": "manual",
+        "criadoEm": "2026-11-03T12:02:40.718Z"
       }
-    ]
+    ],
+    "2026-11": []
   },
   "fechamentos": {
     "2026-07": {
