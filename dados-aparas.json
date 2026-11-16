@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-13T17:33:34.462Z",
+  "geradoEm": "2026-11-16T16:14:30.423Z",
   "lancamentos": {
     "2026-07": [
       {
@@ -4757,30 +4757,6 @@
         "criadoEm": "2026-11-13T17:33:34.483Z"
       },
       {
-        "id": "1794591214484_oz4egl",
-        "data": "2026-11-12",
-        "tipo": "venda_chapa",
-        "peso": 1265,
-        "parceiro": "PCBOX EMBALAGENS LTDA",
-        "nota": "27967",
-        "arquivo": "27967 PCBOX.pdf",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-11-13T17:33:34.484Z"
-      },
-      {
-        "id": "1794591214485_m1maqn",
-        "data": "2026-11-12",
-        "tipo": "venda_chapa",
-        "peso": 1165,
-        "parceiro": "IPE EMBALAGENS LTDA",
-        "nota": "27970",
-        "arquivo": "27970 IPE.pdf",
-        "devolucao": false,
-        "origem": "pdf",
-        "criadoEm": "2026-11-13T17:33:34.485Z"
-      },
-      {
         "id": "1794591214486_yryvic",
         "data": "2026-11-13",
         "tipo": "venda_chapa",
@@ -4791,6 +4767,114 @@
         "devolucao": false,
         "origem": "pdf",
         "criadoEm": "2026-11-13T17:33:34.486Z"
+      },
+      {
+        "id": "1794845670425_uudssd",
+        "data": "2026-11-15",
+        "tipo": "venda_chapa",
+        "peso": 4670,
+        "parceiro": "RENOVAPEL RECICLAGEM DE PAPEIS LTDA",
+        "nota": "27978",
+        "arquivo": "27978 RENOVAPEL.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.425Z"
+      },
+      {
+        "id": "1794845670426_rftosf",
+        "data": "2026-11-15",
+        "tipo": "venda_chapa",
+        "peso": 2040,
+        "parceiro": "IPE EMBALAGENS LTDA",
+        "nota": "27979",
+        "arquivo": "27979 IPE EMBALAGENS.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.426Z"
+      },
+      {
+        "id": "1794845670427_xq423h",
+        "data": "2026-11-15",
+        "tipo": "venda_chapa",
+        "peso": 3540,
+        "parceiro": "RM EMBALAGENS DE PAPELAO LTDA",
+        "nota": "27980",
+        "arquivo": "27980 RM EMBALAGENS.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.427Z"
+      },
+      {
+        "id": "1794845670428_43ut5j",
+        "data": "2026-11-15",
+        "tipo": "venda_chapa",
+        "peso": 1760,
+        "parceiro": "ANSELMO - IND E COMERCIO DE EMBALAGEM LTDA",
+        "nota": "27981",
+        "arquivo": "27981 ANSELMO.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.428Z"
+      },
+      {
+        "id": "1794845670429_4uhhsl",
+        "data": "2026-11-15",
+        "tipo": "venda_chapa",
+        "peso": 2140,
+        "parceiro": "R R STELLA EMBALAGENS",
+        "nota": "27982",
+        "arquivo": "27982 RR STELLA.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.429Z"
+      },
+      {
+        "id": "1794845670430_x6ahgu",
+        "data": "2026-11-15",
+        "tipo": "venda_chapa",
+        "peso": 950,
+        "parceiro": "CARPELL LTDA",
+        "nota": "27983",
+        "arquivo": "27983 CARPELL.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.430Z"
+      },
+      {
+        "id": "1794845670431_3a883q",
+        "data": "2026-11-15",
+        "tipo": "venda_chapa",
+        "peso": 290,
+        "parceiro": "JFER INDUSTRIA E COMERCIO DE CAIXAS LTDA.",
+        "nota": "27984",
+        "arquivo": "27984 JFER.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.431Z"
+      },
+      {
+        "id": "1794845670432_j8bykq",
+        "data": "2026-11-16",
+        "tipo": "venda_chapa",
+        "peso": 1265,
+        "parceiro": "PCBOX EMBALAGENS LTDA",
+        "nota": "27985",
+        "arquivo": "27985 PCBOX.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.432Z"
+      },
+      {
+        "id": "1794845670433_6btuxd",
+        "data": "2026-11-16",
+        "tipo": "venda_chapa",
+        "peso": 1165,
+        "parceiro": "IPE EMBALAGENS LTDA",
+        "nota": "27986",
+        "arquivo": "27986 IPE.pdf",
+        "devolucao": false,
+        "origem": "pdf",
+        "criadoEm": "2026-11-16T16:14:30.433Z"
       }
     ]
   },
